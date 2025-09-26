@@ -1,0 +1,86 @@
+import { AppData } from '../types';
+
+export const initialData: AppData = {
+  users: [
+    { id: 'U1', username: 'teacher', password: 'password', role: 'Teacher', name: 'Dr. Smith' },
+    { id: 'U2', username: 'manager', password: 'password', role: 'Program Co-ordinator', name: 'Ms. Jones' },
+    { id: 'U3', username: 'university', password: 'password', role: 'University', name: 'Dean Adams' },
+    { id: 'U4', username: 'admin', password: 'password', role: 'Admin', name: 'Admin User' },
+  ],
+  colleges: [
+      { id: 'CUIET', name: 'CUIET' },
+      { id: 'CCP', name: 'CCP' },
+      { id: 'CBS', name: 'CBS' },
+  ],
+  programs: [
+      { id: 'P1', name: 'BE ME', collegeId: 'CUIET' },
+      { id: 'P2', name: 'BE ECE', collegeId: 'CUIET' },
+      { id: 'P3', name: 'B. Pharma', collegeId: 'CCP' },
+      { id: 'P4', name: 'M. Pharma', collegeId: 'CCP' },
+      { id: 'P5', name: 'BBA', collegeId: 'CBS' },
+      { id: 'P6', name: 'MBA Global', collegeId: 'CBS' },
+      { id: 'P7', name: 'MBA Pharmacy', collegeId: 'CBS'},
+  ],
+  courses: [
+    { id: 'C101', name: 'Introduction to Programming', code: 'CS101', programId: 'P2', target: 60, internalWeightage: 40, externalWeightage: 60, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
+    { id: 'C102', name: 'Database Management Systems', code: 'CS203', programId: 'P2', target: 65, internalWeightage: 50, externalWeightage: 50, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
+  ],
+  students: [
+    { id: 'S001', name: 'Alice Johnson' },
+    { id: 'S002', name: 'Bob Williams' },
+    { id: 'S003', name: 'Charlie Brown' },
+    { id: 'S004', name: 'Diana Miller' },
+    { id: 'S005', name: 'Eve Davis' },
+    { id: 'S006', name: 'Frank White' },
+    { id: 'S007', name: 'Grace Lee' },
+  ],
+   enrollments: [
+    { courseId: 'C101', studentId: 'S001' },
+    { courseId: 'C101', studentId: 'S002' },
+    { courseId: 'C101', studentId: 'S003' },
+    { courseId: 'C101', studentId: 'S004' },
+    { courseId: 'C101', studentId: 'S005' },
+    { courseId: 'C102', studentId: 'S003' },
+    { courseId: 'C102', studentId: 'S004' },
+    { courseId: 'C102', studentId: 'S005' },
+    { courseId: 'C102', studentId: 'S006' },
+    { courseId: 'C102', studentId: 'S007' },
+  ],
+  courseOutcomes: [
+    { id: 'CO1', courseId: 'C101', number: 'CO1', description: 'Understand basic programming concepts.' },
+    { id: 'CO2', courseId: 'C101', number: 'CO2', description: 'Apply control structures to solve problems.' },
+    { id: 'CO3', courseId: 'C101', number: 'CO3', description: 'Use functions to create modular code.' },
+    { id: 'CO4', courseId: 'C102', number: 'CO1', description: 'Understand relational database concepts.' },
+    { id: 'CO5', courseId: 'C102', number: 'CO2', description: 'Write complex SQL queries.' },
+  ],
+  programOutcomes: [
+    { id: 'PO1', number: 'PO1', description: 'Engineering knowledge', programId: 'P2' },
+    { id: 'PO2', number: 'PO2', description: 'Problem analysis', programId: 'P2' },
+    { id: 'PO3', number: 'PO3', description: 'Design/development of solutions', programId: 'P2' },
+    { id: 'PO4', number: 'PO4', description: 'Conduct investigations of complex problems', programId: 'P2' },
+  ],
+  coPoMapping: [
+    { courseId: 'C101', coId: 'CO1', poId: 'PO1', level: 3 },
+    { courseId: 'C101', coId: 'CO1', poId: 'PO2', level: 1 },
+    { courseId: 'C101', coId: 'CO2', poId: 'PO2', level: 2 },
+    { courseId: 'C101', coId: 'CO2', poId: 'PO3', level: 3 },
+    { courseId: 'C101', coId: 'CO3', poId: 'PO3', level: 3 },
+    { courseId: 'C102', coId: 'CO4', poId: 'PO1', level: 3 },
+    { courseId: 'C102', coId: 'CO5', poId: 'PO2', level: 2 },
+    { courseId: 'C102', coId: 'CO5', poId: 'PO4', level: 3 },
+  ],
+  assessments: [
+    { id: 'A1', courseId: 'C101', name: 'Sessional Test 1 (ST1)', type: 'Internal', questions: [{ q: 'Q1', coIds: ['CO1'], maxMarks: 20 }, { q: 'Q2', coIds: ['CO2'], maxMarks: 20 }] },
+    { id: 'A2', courseId: 'C101', name: 'Assignments', type: 'Internal', questions: [{ q: 'Q1', coIds: ['CO3'], maxMarks: 10 }] },
+    { id: 'A3', courseId: 'C101', name: 'External Examination (ETE)', type: 'External', questions: [{ q: 'Q1', coIds: ['CO1'], maxMarks: 25 }, { q: 'Q2', coIds: ['CO2'], maxMarks: 25 }, { q: 'Q3', coIds: ['CO3','CO1'], maxMarks: 25 }] },
+  ],
+  marks: [
+    // C101 Marks
+    { studentId: 'S001', assessmentId: 'A1', scores: [{ q: 'Q1', marks: 18 }, { q: 'Q2', marks: 15 }] },
+    { studentId: 'S001', assessmentId: 'A2', scores: [{ q: 'Q1', marks: 8 }] },
+    { studentId: 'S001', assessmentId: 'A3', scores: [{ q: 'Q1', marks: 20 }, { q: 'Q2', marks: 22 }, { q: 'Q3', marks: 19 }] },
+    { studentId: 'S002', assessmentId: 'A1', scores: [{ q: 'Q1', marks: 12 }, { q: 'Q2', marks: 10 }] },
+    { studentId: 'S002', assessmentId: 'A2', scores: [{ q: 'Q1', marks: 5 }] },
+    { studentId: 'S002', assessmentId: 'A3', scores: [{ q: 'Q1', marks: 15 }, { q: 'Q2', marks: 18 }, { q: 'Q3', marks: 14 }] },
+  ],
+};
