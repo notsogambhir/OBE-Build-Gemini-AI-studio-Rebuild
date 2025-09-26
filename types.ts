@@ -1,6 +1,7 @@
 // --- Enums and Basic Types ---
 export type Role = 'Teacher' | 'Program Co-ordinator' | 'University' | 'Admin';
 export type College = 'CUIET' | 'CCP' | 'CBS';
+export type CourseStatus = 'Active' | 'Completed' | 'Future';
 
 // --- Data Structures ---
 export interface User {
@@ -30,6 +31,7 @@ export interface Course {
     level2: number;
     level1: number;
   };
+  status: CourseStatus;
 }
 
 export interface Student {

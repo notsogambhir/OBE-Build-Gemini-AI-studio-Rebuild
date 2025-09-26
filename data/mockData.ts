@@ -22,8 +22,12 @@ export const initialData: AppData = {
       { id: 'P7', name: 'MBA Pharmacy', collegeId: 'CBS'},
   ],
   courses: [
-    { id: 'C101', name: 'Introduction to Programming', code: 'CS101', programId: 'P2', target: 60, internalWeightage: 40, externalWeightage: 60, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
-    { id: 'C102', name: 'Database Management Systems', code: 'CS203', programId: 'P2', target: 65, internalWeightage: 50, externalWeightage: 50, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
+    { id: 'C101', name: 'Introduction to Programming', code: 'CS101', programId: 'P2', status: 'Completed', target: 60, internalWeightage: 40, externalWeightage: 60, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
+    { id: 'C102', name: 'Database Management Systems', code: 'CS203', programId: 'P2', status: 'Active', target: 65, internalWeightage: 50, externalWeightage: 50, attainmentLevels: { level3: 60, level2: 50, level1: 30 } },
+    { id: 'C103', name: 'Digital Logic Design', code: 'EC201', programId: 'P2', status: 'Active', target: 60, internalWeightage: 40, externalWeightage: 60, attainmentLevels: { level3: 70, level2: 60, level1: 50 } },
+    { id: 'C201', name: 'Thermodynamics', code: 'ME101', programId: 'P1', status: 'Active', target: 55, internalWeightage: 30, externalWeightage: 70, attainmentLevels: { level3: 65, level2: 55, level1: 45 } },
+    { id: 'C202', name: 'Fluid Mechanics', code: 'ME202', programId: 'P1', status: 'Future', target: 60, internalWeightage: 40, externalWeightage: 60, attainmentLevels: { level3: 60, level2: 50, level1: 40 } },
+    { id: 'C301', name: 'Pharmaceutical Chemistry', code: 'BP101', programId: 'P3', status: 'Completed', target: 70, internalWeightage: 50, externalWeightage: 50, attainmentLevels: { level3: 75, level2: 65, level1: 55 } },
   ],
   students: [
     { id: 'S001', name: 'Alice Johnson' },
@@ -33,6 +37,9 @@ export const initialData: AppData = {
     { id: 'S005', name: 'Eve Davis' },
     { id: 'S006', name: 'Frank White' },
     { id: 'S007', name: 'Grace Lee' },
+    { id: 'S008', name: 'Henry Taylor' },
+    { id: 'S009', name: 'Ivy Green' },
+    { id: 'S010', name: 'Jack Black' },
   ],
    enrollments: [
     { courseId: 'C101', studentId: 'S001' },
@@ -45,6 +52,11 @@ export const initialData: AppData = {
     { courseId: 'C102', studentId: 'S005' },
     { courseId: 'C102', studentId: 'S006' },
     { courseId: 'C102', studentId: 'S007' },
+    { courseId: 'C103', studentId: 'S006' },
+    { courseId: 'C103', studentId: 'S007' },
+    { courseId: 'C103', studentId: 'S008' },
+    { courseId: 'C103', studentId: 'S009' },
+    { courseId: 'C201', studentId: 'S010' },
   ],
   courseOutcomes: [
     { id: 'CO1', courseId: 'C101', number: 'CO1', description: 'Understand basic programming concepts.' },
@@ -52,12 +64,16 @@ export const initialData: AppData = {
     { id: 'CO3', courseId: 'C101', number: 'CO3', description: 'Use functions to create modular code.' },
     { id: 'CO4', courseId: 'C102', number: 'CO1', description: 'Understand relational database concepts.' },
     { id: 'CO5', courseId: 'C102', number: 'CO2', description: 'Write complex SQL queries.' },
+    { id: 'CO6', courseId: 'C103', number: 'CO1', description: 'Understand number systems and logic gates.' },
+    { id: 'CO7', courseId: 'C103', number: 'CO2', description: 'Design combinational logic circuits.' },
   ],
   programOutcomes: [
     { id: 'PO1', number: 'PO1', description: 'Engineering knowledge', programId: 'P2' },
     { id: 'PO2', number: 'PO2', description: 'Problem analysis', programId: 'P2' },
     { id: 'PO3', number: 'PO3', description: 'Design/development of solutions', programId: 'P2' },
     { id: 'PO4', number: 'PO4', description: 'Conduct investigations of complex problems', programId: 'P2' },
+    { id: 'PO5', number: 'PO1', description: 'Mechanical Engineering principles', programId: 'P1' },
+    { id: 'PO6', number: 'PO2', description: 'Modern tool usage', programId: 'P1' },
   ],
   coPoMapping: [
     { courseId: 'C101', coId: 'CO1', poId: 'PO1', level: 3 },
@@ -68,11 +84,14 @@ export const initialData: AppData = {
     { courseId: 'C102', coId: 'CO4', poId: 'PO1', level: 3 },
     { courseId: 'C102', coId: 'CO5', poId: 'PO2', level: 2 },
     { courseId: 'C102', coId: 'CO5', poId: 'PO4', level: 3 },
+    { courseId: 'C103', coId: 'CO6', poId: 'PO1', level: 3 },
+    { courseId: 'C103', coId: 'CO7', poId: 'PO3', level: 2 },
   ],
   assessments: [
     { id: 'A1', courseId: 'C101', name: 'Sessional Test 1 (ST1)', type: 'Internal', questions: [{ q: 'Q1', coIds: ['CO1'], maxMarks: 20 }, { q: 'Q2', coIds: ['CO2'], maxMarks: 20 }] },
     { id: 'A2', courseId: 'C101', name: 'Assignments', type: 'Internal', questions: [{ q: 'Q1', coIds: ['CO3'], maxMarks: 10 }] },
     { id: 'A3', courseId: 'C101', name: 'External Examination (ETE)', type: 'External', questions: [{ q: 'Q1', coIds: ['CO1'], maxMarks: 25 }, { q: 'Q2', coIds: ['CO2'], maxMarks: 25 }, { q: 'Q3', coIds: ['CO3','CO1'], maxMarks: 25 }] },
+    { id: 'A4', courseId: 'C102', name: 'Mid Term Exam', type: 'Internal', questions: [{ q: 'Q1', coIds: ['CO4'], maxMarks: 50 }] },
   ],
   marks: [
     // C101 Marks
@@ -82,5 +101,8 @@ export const initialData: AppData = {
     { studentId: 'S002', assessmentId: 'A1', scores: [{ q: 'Q1', marks: 12 }, { q: 'Q2', marks: 10 }] },
     { studentId: 'S002', assessmentId: 'A2', scores: [{ q: 'Q1', marks: 5 }] },
     { studentId: 'S002', assessmentId: 'A3', scores: [{ q: 'Q1', marks: 15 }, { q: 'Q2', marks: 18 }, { q: 'Q3', marks: 14 }] },
+    // C102 Marks
+    { studentId: 'S003', assessmentId: 'A4', scores: [{ q: 'Q1', marks: 45 }] },
+    { studentId: 'S004', assessmentId: 'A4', scores: [{ q: 'Q1', marks: 30 }] },
   ],
 };

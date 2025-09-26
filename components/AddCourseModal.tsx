@@ -23,7 +23,8 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ onClose, onAdd, program
             target,
             internalWeightage: 40,
             externalWeightage: 60,
-            attainmentLevels: { level3: 80, level2: 70, level1: 60 }
+            attainmentLevels: { level3: 80, level2: 70, level1: 60 },
+            status: 'Future', // Default status for new courses
         };
         onAdd(newCourse);
     }
