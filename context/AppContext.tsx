@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { User, Program, College, AppData } from '../types';
-import { initialData } from '../data/mockData';
+import { initialData } from '../mockData';
 
 interface AppContextType {
   data: AppData;

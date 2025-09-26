@@ -1,19 +1,32 @@
 
+
 import React, { useState } from 'react';
 import { Course } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import AssessmentDetails from './AssessmentDetails';
+import CreateAssessmentModal from './CreateAssessmentModal';
 
 interface ManageCourseAssessmentsProps {
   course: Course;
 }
 
 const ManageCourseAssessments: React.FC<ManageCourseAssessmentsProps> = ({ course }) => {
-  const { data, currentUser } = useAppContext();
+  const { data, setData, currentUser } = useAppContext();
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
   const assessments = data.assessments.filter(a => a.courseId === course.id);
   const isCoordinator = currentUser?.role === 'Program Co-ordinator';
+
+  const handleDeleteAssessment = (assessmentId: string) => {
+    if (window.confirm("Are you sure you want to delete this assessment and all its questions and marks? This action cannot be undone.")) {
+      setData(prev => ({
+        ...prev,
+        assessments: prev.assessments.filter(a => a.id !== assessmentId),
+        marks: prev.marks.filter(m => m.assessmentId !== assessmentId)
+      }));
+    }
+  }
 
   if (selectedAssessmentId) {
     return <AssessmentDetails assessmentId={selectedAssessmentId} onBack={() => setSelectedAssessmentId(null)} />;
@@ -24,7 +37,7 @@ const ManageCourseAssessments: React.FC<ManageCourseAssessmentsProps> = ({ cours
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-700">Course Assessments</h2>
         {isCoordinator && (
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
+          <button onClick={() => setCreateModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
             Create Assessment
           </button>
         )}
@@ -47,7 +60,7 @@ const ManageCourseAssessments: React.FC<ManageCourseAssessmentsProps> = ({ cours
                   Manage Questions
                 </button>
                 {isCoordinator && (
-                   <button className="text-red-600 hover:text-red-800 font-semibold">
+                   <button onClick={() => handleDeleteAssessment(assessment.id)} className="text-red-600 hover:text-red-800 font-semibold">
                       Delete
                   </button>
                 )}
@@ -55,7 +68,11 @@ const ManageCourseAssessments: React.FC<ManageCourseAssessmentsProps> = ({ cours
             </div>
           )
         })}
+        {assessments.length === 0 && <p className="text-gray-500 text-center py-4">No assessments found for this course.</p>}
       </div>
+      {isCreateModalOpen && (
+        <CreateAssessmentModal courseId={course.id} onClose={() => setCreateModalOpen(false)} />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { AppData } from '../types';
+import { AppData } from './types';
 
 export const initialData: AppData = {
   users: [
@@ -30,16 +30,18 @@ export const initialData: AppData = {
     { id: 'C301', name: 'Pharmaceutical Chemistry', code: 'BP101', programId: 'P3', status: 'Completed', target: 70, internalWeightage: 50, externalWeightage: 50, attainmentLevels: { level3: 75, level2: 65, level1: 55 } },
   ],
   students: [
-    { id: 'S001', name: 'Alice Johnson' },
-    { id: 'S002', name: 'Bob Williams' },
-    { id: 'S003', name: 'Charlie Brown' },
-    { id: 'S004', name: 'Diana Miller' },
-    { id: 'S005', name: 'Eve Davis' },
-    { id: 'S006', name: 'Frank White' },
-    { id: 'S007', name: 'Grace Lee' },
-    { id: 'S008', name: 'Henry Taylor' },
-    { id: 'S009', name: 'Ivy Green' },
-    { id: 'S010', name: 'Jack Black' },
+    { id: 'S001', name: 'Alice Johnson', programId: 'P2', status: 'Active' },
+    { id: 'S002', name: 'Bob Williams', programId: 'P2', status: 'Active' },
+    { id: 'S003', name: 'Charlie Brown', programId: 'P2', status: 'Active' },
+    { id: 'S004', name: 'Diana Miller', programId: 'P2', status: 'Active' },
+    { id: 'S005', name: 'Eve Davis', programId: 'P2', status: 'Inactive' },
+    { id: 'S006', name: 'Frank White', programId: 'P2', status: 'Active' },
+    { id: 'S007', name: 'Grace Lee', programId: 'P2', status: 'Active' },
+    { id: 'S008', name: 'Henry Taylor', programId: 'P1', status: 'Active' },
+    { id: 'S009', name: 'Ivy Green', programId: 'P1', status: 'Active' },
+    { id: 'S010', name: 'Jack Black', programId: 'P1', status: 'Inactive' },
+    { id: 'S011', name: 'Kate Hudson', programId: 'P3', status: 'Active' },
+    { id: 'S012', name: 'Liam Neeson', programId: 'P3', status: 'Active' },
   ],
    enrollments: [
     { courseId: 'C101', studentId: 'S001' },
@@ -47,16 +49,8 @@ export const initialData: AppData = {
     { courseId: 'C101', studentId: 'S003' },
     { courseId: 'C101', studentId: 'S004' },
     { courseId: 'C101', studentId: 'S005' },
-    { courseId: 'C102', studentId: 'S003' },
-    { courseId: 'C102', studentId: 'S004' },
-    { courseId: 'C102', studentId: 'S005' },
-    { courseId: 'C102', studentId: 'S006' },
-    { courseId: 'C102', studentId: 'S007' },
-    { courseId: 'C103', studentId: 'S006' },
-    { courseId: 'C103', studentId: 'S007' },
-    { courseId: 'C103', studentId: 'S008' },
-    { courseId: 'C103', studentId: 'S009' },
-    { courseId: 'C201', studentId: 'S010' },
+    // C102 and C103 were Future, now Active, so they will be auto-enrolled with active P2 students
+    // C201 is active, so it will be auto-enrolled with active P1 students
   ],
   courseOutcomes: [
     { id: 'CO1', courseId: 'C101', number: 'CO1', description: 'Understand basic programming concepts.' },
@@ -80,11 +74,17 @@ export const initialData: AppData = {
     { courseId: 'C101', coId: 'CO1', poId: 'PO2', level: 1 },
     { courseId: 'C101', coId: 'CO2', poId: 'PO2', level: 2 },
     { courseId: 'C101', coId: 'CO2', poId: 'PO3', level: 3 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C101', coId: 'CO3', poId: 'PO3', level: 3 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C102', coId: 'CO4', poId: 'PO1', level: 3 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C102', coId: 'CO5', poId: 'PO2', level: 2 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C102', coId: 'CO5', poId: 'PO4', level: 3 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C103', coId: 'CO6', poId: 'PO1', level: 3 },
+    // FIX: Changed 'id' property to 'courseId' to match the CoPoMapping type.
     { courseId: 'C103', coId: 'CO7', poId: 'PO3', level: 2 },
   ],
   assessments: [

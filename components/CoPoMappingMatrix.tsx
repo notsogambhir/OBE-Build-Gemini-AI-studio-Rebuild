@@ -1,37 +1,42 @@
 
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { CoPoMapping, CoPoMap } from '../types';
+import { useAppContext } from '../hooks/useAppContext';
 
 
-
-
-
-import React, { useState, useMemo } from 'react';
-// FIX: Import CoPoMapping type as the component will now accept it as a prop.
-import { CourseOutcome, ProgramOutcome, CoPoMap, CoPoMapping } from '../types';
-
-interface CoPoMappingMatrixProps {
-  courseOutcomes: CourseOutcome[];
-  programOutcomes: ProgramOutcome[];
-  // FIX: Change prop to accept an array of mappings, which is how it's stored in context.
-  initialMap: CoPoMapping[];
-}
-
-const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, programOutcomes, initialMap: initialMapArray }) => {
+const CoPoMappingMatrix: React.FC = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const { data, setData, currentUser } = useAppContext();
   
-  // FIX: Process the initialMapArray into the CoPoMap object format used by the component's state.
-  const initialMap = useMemo(() => {
+  const canManage = currentUser?.role === 'Teacher' || currentUser?.role === 'Program Co-ordinator';
+
+  // Fetch all required data from context
+  const { courseOutcomes, programOutcomes, initialMapArray } = useMemo(() => {
+    const course = data.courses.find(c => c.id === courseId);
+    return {
+      courseOutcomes: data.courseOutcomes.filter(co => co.courseId === courseId),
+      programOutcomes: data.programOutcomes.filter(po => po.programId === course?.programId),
+      initialMapArray: data.coPoMapping.filter(m => m.courseId === courseId),
+    };
+  }, [courseId, data]);
+  
+  // State to hold the current mapping being edited
+  const [mapping, setMapping] = useState<CoPoMap>({});
+
+  // Effect to initialize or reset state when data changes
+  useEffect(() => {
     const map: CoPoMap = {};
     for (const co of courseOutcomes) {
       map[co.id] = {};
     }
-    for (const mapping of initialMapArray) {
-      if (map[mapping.coId]) {
-        map[mapping.coId][mapping.poId] = mapping.level;
+    for (const m of initialMapArray) {
+      if (map[m.coId]) {
+        map[m.coId][m.poId] = m.level;
       }
     }
-    return map;
-  }, [initialMapArray, courseOutcomes]);
-
-  const [mapping, setMapping] = useState<CoPoMap>(initialMap);
+    setMapping(map);
+  }, [courseOutcomes, initialMapArray]);
 
   const handleMappingChange = (coId: string, poId: string, value: string) => {
     const level = parseInt(value, 10);
@@ -46,6 +51,38 @@ const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, p
     }));
   };
 
+  const handleSaveMapping = () => {
+    if (!courseId) return;
+    
+    // Convert the state object back into the array format for global state
+    const newMappingArray: CoPoMapping[] = [];
+    Object.keys(mapping).forEach(coId => {
+      Object.keys(mapping[coId]).forEach(poId => {
+        const level = mapping[coId][poId];
+        if (level > 0) { // Only save meaningful mappings
+          newMappingArray.push({
+            courseId,
+            coId,
+            poId,
+            level
+          });
+        }
+      });
+    });
+
+    // Update the global state
+    setData(prev => ({
+      ...prev,
+      // Remove old mappings for this course and add the new ones
+      coPoMapping: [
+        ...prev.coPoMapping.filter(m => m.courseId !== courseId),
+        ...newMappingArray
+      ]
+    }));
+    
+    alert("Mapping saved successfully!");
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-700">CO-PO Mapping Matrix</h2>
@@ -56,7 +93,6 @@ const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, p
               <th className="border border-gray-300 p-2 text-xs font-medium text-gray-500 uppercase">CO</th>
               {programOutcomes.map(po => (
                 <th key={po.id} className="border border-gray-300 p-2 text-xs font-medium text-gray-500 uppercase" title={po.description}>
-                  {/* FIX: Use 'po.number' instead of 'po.code'. */}
                   {po.number}
                 </th>
               ))}
@@ -66,7 +102,6 @@ const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, p
             {courseOutcomes.map(co => (
               <tr key={co.id} className="bg-white hover:bg-gray-50">
                 <td className="border border-gray-300 p-2 text-sm font-medium text-gray-900" title={co.description}>
-                  {/* FIX: Use 'co.number' instead of 'co.code'. */}
                   {co.number}
                 </td>
                 {programOutcomes.map(po => (
@@ -74,7 +109,8 @@ const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, p
                     <select
                       value={mapping[co.id]?.[po.id] || 0}
                       onChange={(e) => handleMappingChange(co.id, po.id, e.target.value)}
-                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                      disabled={!canManage}
                     >
                       <option value="0">-</option>
                       <option value="1">1</option>
@@ -88,9 +124,14 @@ const CoPoMappingMatrix: React.FC<CoPoMappingMatrixProps> = ({ courseOutcomes, p
           </tbody>
         </table>
       </div>
-       <button className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
+      {canManage && (
+       <button 
+          onClick={handleSaveMapping}
+          className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg"
+        >
           Save Mapping
         </button>
+      )}
     </div>
   );
 };

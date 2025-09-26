@@ -37,7 +37,7 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
             type="number" 
             value={course.target} 
             onChange={e => updateCourseField('target', Number(e.target.value))} 
-            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
             disabled={!isCoordinator}
           />
         </div>
@@ -47,7 +47,7 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
             type="number" 
             value={course.internalWeightage} 
             onChange={e => updateCourseField('internalWeightage', Number(e.target.value))} 
-            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
             disabled={!isCoordinator}
           />
         </div>
@@ -57,7 +57,7 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
             type="number" 
             value={course.externalWeightage} 
             onChange={e => updateCourseField('externalWeightage', Number(e.target.value))} 
-            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
             disabled={!isCoordinator}
           />
         </div>
@@ -72,7 +72,7 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
                 type="number" 
                 value={course.attainmentLevels.level3} 
                 onChange={e => updateAttainmentLevel('level3', Number(e.target.value))} 
-                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!isCoordinator}
               />
           </div>
@@ -82,7 +82,7 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
                 type="number" 
                 value={course.attainmentLevels.level2} 
                 onChange={e => updateAttainmentLevel('level2', Number(e.target.value))} 
-                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!isCoordinator}
               />
           </div>
@@ -92,14 +92,13 @@ const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({ course }) => {
                 type="number" 
                 value={course.attainmentLevels.level1} 
                 onChange={e => updateAttainmentLevel('level1', Number(e.target.value))} 
-                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!isCoordinator}
               />
           </div>
         </div>
       </div>
 
-      {!isCoordinator && <p className="text-sm text-gray-500">You do not have permission to edit these settings.</p>}
     </div>
   );
 };

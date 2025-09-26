@@ -2,6 +2,7 @@
 export type Role = 'Teacher' | 'Program Co-ordinator' | 'University' | 'Admin';
 export type College = 'CUIET' | 'CCP' | 'CBS';
 export type CourseStatus = 'Active' | 'Completed' | 'Future';
+export type StudentStatus = 'Active' | 'Inactive';
 
 // --- Data Structures ---
 export interface User {
@@ -37,6 +38,8 @@ export interface Course {
 export interface Student {
   id: string;
   name: string;
+  programId: string;
+  status: StudentStatus;
 }
 
 export interface Enrollment {

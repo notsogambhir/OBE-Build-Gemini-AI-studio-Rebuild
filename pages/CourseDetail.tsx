@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
@@ -20,10 +17,6 @@ const CourseDetail: React.FC = () => {
 
   const course = useMemo(() => data.courses.find(c => c.id === courseId), [courseId, data.courses]);
   
-  const courseOutcomes = useMemo(() => data.courseOutcomes.filter(co => co.courseId === courseId), [courseId, data.courseOutcomes]);
-  const programOutcomes = useMemo(() => data.programOutcomes.filter(po => po.programId === course?.programId), [course, data.programOutcomes]);
-  const coPoMapping = useMemo(() => data.coPoMapping.filter(m => m.courseId === courseId), [courseId, data.coPoMapping]);
-
   if (!course) {
     return <div className="text-center text-red-500 p-8">Course not found.</div>;
   }
@@ -40,7 +33,8 @@ const CourseDetail: React.FC = () => {
         // FIX: Passed the `course` prop to `ManageCourseAssessments` to satisfy its required props.
         return <ManageCourseAssessments course={course} />;
       case 'CO-PO Mapping':
-        return <CoPoMappingMatrix courseOutcomes={courseOutcomes} programOutcomes={programOutcomes} initialMap={coPoMapping} />;
+        // FIX: CoPoMappingMatrix fetches its own data via context, so it does not require props.
+        return <CoPoMappingMatrix />;
       default:
         return null;
     }

@@ -1,9 +1,21 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useAppContext } from '../hooks/useAppContext';
+import { Role } from '../types';
 
 const AttainmentReports: React.FC = () => {
-    const { data, selectedProgram } = useAppContext();
+    const { data, selectedProgram, currentUser } = useAppContext();
+    
+    // FIX: Implement role-based access control.
+    const forbiddenRoles: Role[] = ['Teacher', 'Program Co-ordinator'];
+    if (currentUser && forbiddenRoles.includes(currentUser.role)) {
+        return (
+            <div className="text-center p-8 bg-white rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold text-gray-700">Feature Coming Soon</h1>
+                <p className="text-gray-500 mt-2">The Attainment Reports section is currently under development.</p>
+            </div>
+        )
+    }
     
     const attainmentData = useMemo(() => {
         if (!selectedProgram) return null;
@@ -16,12 +28,11 @@ const AttainmentReports: React.FC = () => {
             const studentsInCourse = data.students.filter(s => enrolledStudentIds.has(s.id));
             const cosForThisCourse = data.courseOutcomes.filter(co => co.courseId === course.id);
             
-            // FIX: Add a robust guard to handle courses with no valid students, preventing division-by-zero errors.
             if (studentsInCourse.length === 0) {
                 cosForThisCourse.forEach(co => {
                     allCoFinalScores[co.id] = { finalScore: 0, percentage: 0 };
                 });
-                return; // Continue to the next course
+                return; 
             }
 
             const assessmentsForThisCourse = data.assessments.filter(a => a.courseId === course.id);
@@ -103,9 +114,7 @@ const AttainmentReports: React.FC = () => {
     const [selectedCourseId, setSelectedCourseId] = useState<string>('');
     
     useEffect(() => {
-        // Safely set the initial course ID once data is available
         if (attainmentData?.coursesInProgram && attainmentData.coursesInProgram.length > 0) {
-            // Only set if it hasn't been set or if the available courses change
             if (!selectedCourseId || !attainmentData.coursesInProgram.find(c => c.id === selectedCourseId)) {
                setSelectedCourseId(attainmentData.coursesInProgram[0].id);
             }

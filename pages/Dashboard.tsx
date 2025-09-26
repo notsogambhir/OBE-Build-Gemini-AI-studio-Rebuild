@@ -9,13 +9,14 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
 
     const programCourses = data.courses.filter(c => c.programId === selectedProgram?.id);
+    const programStudents = data.students.filter(s => s.programId === selectedProgram?.id);
     const programPOs = data.programOutcomes.filter(po => po.programId === selectedProgram?.id);
   
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard title="Courses in Program" value={programCourses.length} icon={<BookOpen />} color="blue" />
-                <StatCard title="Global Students" value={data.students.length} icon={<Users />} color="green" />
+                <StatCard title="Students in Program" value={programStudents.length} icon={<Users />} color="green" />
                 <StatCard title="Program Outcomes" value={programPOs.length} icon={<Target />} color="purple" />
                 <StatCard title="Courses to Assess" value={programCourses.length} icon={<PieChart />} color="red" />
             </div>

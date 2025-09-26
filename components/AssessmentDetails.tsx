@@ -1,6 +1,7 @@
 
+
 import React, { useState } from 'react';
-import { AssessmentQuestion, StudentMark } from '../types';
+import { AssessmentQuestion, StudentMark, Mark, MarkScore } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import ExcelUploader from './ExcelUploader';
 import { PlusCircle, Trash2 } from './Icons';
@@ -16,7 +17,6 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
 
     const assessment = data.assessments.find(a => a.id === assessmentId);
 
-    const [studentMarks, setStudentMarks] = useState<StudentMark[]>([]);
     const [newQName, setNewQName] = useState('');
     const [newQMaxMarks, setNewQMaxMarks] = useState(10);
     
@@ -34,17 +34,50 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
     
     const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === assessment.courseId);
 
-    const handleMarksUpload = (data: any[]) => {
-        const marksData: StudentMark[] = data.map(row => {
-            const studentMark: StudentMark = { studentId: row['Student ID'] };
-            Object.keys(row).forEach(key => {
-                if(key !== 'Student ID'){
-                    studentMark[key] = row[key] === 'U' ? 'U' : Number(row[key]);
+    const handleMarksUpload = (uploadedData: any[]) => {
+        // FIX: The entire function logic is rewritten to correctly update the global state.
+        setData(prev => {
+            const newMarksList: Mark[] = [...prev.marks];
+
+            uploadedData.forEach(row => {
+                const studentIdKey = Object.keys(row).find(key => key.toLowerCase().includes('id'));
+                if (!studentIdKey) return; // Skip row if no student ID found
+                
+                const studentId = String(row[studentIdKey]);
+                if (!studentId) return;
+
+                // Find or create the student's mark entry for this specific assessment
+                let studentMarkEntry = newMarksList.find(m => m.studentId === studentId && m.assessmentId === assessment.id);
+                if (!studentMarkEntry) {
+                    studentMarkEntry = { studentId, assessmentId: assessment.id, scores: [] };
+                    newMarksList.push(studentMarkEntry);
                 }
+
+                // Update scores for each question column in the row
+                Object.keys(row).forEach(questionName => {
+                    if (questionName.toLowerCase().includes('id') || questionName.toLowerCase().includes('name')) return;
+                    
+                    const markValue = row[questionName];
+                    if (markValue === null || markValue === undefined || String(markValue).trim().toUpperCase() === 'U') {
+                        return; // Ignore empty or 'U' cells
+                    }
+                    
+                    const score: MarkScore = { q: questionName, marks: Number(markValue) };
+                    if (isNaN(score.marks)) return; // Ignore non-numeric values
+
+                    const existingScoreIndex = studentMarkEntry.scores.findIndex(s => s.q === score.q);
+                    if (existingScoreIndex > -1) {
+                        studentMarkEntry.scores[existingScoreIndex] = score;
+                    } else {
+                        studentMarkEntry.scores.push(score);
+                    }
+                });
             });
-            return studentMark;
+
+            return { ...prev, marks: newMarksList };
         });
-        setStudentMarks(marksData);
+
+        alert(`Marks processed for ${uploadedData.length} students.`);
     };
 
     const handleAddQuestion = () => {
@@ -132,7 +165,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
             
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">Upload Student Marks</h3>
-                <ExcelUploader<StudentMark> onFileUpload={handleMarksUpload} label="Upload Marks" format="Col A: Student ID, other cols: Question Names" />
+                <ExcelUploader<any> onFileUpload={handleMarksUpload} label="Upload Marks" format="columns: id, name, Q1, Q2..." />
             </div>
 
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">

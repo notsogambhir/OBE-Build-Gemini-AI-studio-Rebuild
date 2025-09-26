@@ -13,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
   const allMenuItems = [
     { to: '/dashboard', label: 'Dashboard', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
     { to: '/courses', label: 'Courses', icon: <BookOpen />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
+    { to: '/students', label: 'Students', icon: <Users />, roles: ['Program Co-ordinator', 'Admin'] },
     { to: '/program-outcomes', label: 'Program Outcomes', icon: <Target />, roles: ['Program Co-ordinator', 'Admin'] },
     { to: '/reports', label: 'Attainment Reports', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
     { to: '/settings', label: 'Settings', icon: <Settings />, roles: ['Admin'] },

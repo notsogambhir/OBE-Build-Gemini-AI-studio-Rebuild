@@ -1,28 +1,25 @@
-
-
-
-
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-// FIX: Use context instead of non-existent MOCK data.
 import { useAppContext } from '../hooks/useAppContext';
 
 const StudentCOAttainmentReport: React.FC = () => {
     const { courseId } = useParams();
-    // FIX: Get data from context.
     const { data } = useAppContext();
 
-    // FIX: Get course from context data.
     const course = useMemo(() => data.courses.find(c => c.id === courseId), [courseId, data.courses]);
-    // FIX: Get course outcomes from context data.
     const courseOutcomes = useMemo(() => data.courseOutcomes.filter(co => co.courseId === courseId), [courseId, data.courseOutcomes]);
 
-    // Mock data for student attainment. In a real app, this would be calculated.
     const studentAttainmentData = useMemo(() => {
-        // FIX: Use students from context data.
-        return data.students.map(student => {
+        if (!courseId) return [];
+        
+        const enrolledStudentIds = new Set(data.enrollments.filter(e => e.courseId === courseId).map(e => e.studentId));
+        const studentsInCourse = data.students.filter(s => enrolledStudentIds.has(s.id));
+
+        return studentsInCourse.map(student => {
             const attainments: { [coId: string]: number } = {};
             courseOutcomes.forEach(co => {
+                // This logic is still mocked, but now it only applies to enrolled students.
+                // A real implementation would calculate this based on marks.
                 attainments[co.id] = Math.floor(Math.random() * (100 - 40 + 1) + 40);
             });
             return {
@@ -30,7 +27,7 @@ const StudentCOAttainmentReport: React.FC = () => {
                 attainments,
             };
         });
-    }, [courseOutcomes, data.students]);
+    }, [courseId, data.enrollments, data.students, courseOutcomes]);
 
     if (!course) {
         return <div className="text-center text-red-500">Course not found.</div>;
@@ -49,7 +46,6 @@ const StudentCOAttainmentReport: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                                 {courseOutcomes.map(co => (
-                                    // FIX: Use 'co.number' instead of 'co.code'.
                                     <th key={co.id} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{co.number} Attainment %</th>
                                 ))}
                             </tr>
@@ -61,7 +57,6 @@ const StudentCOAttainmentReport: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{student.name}</td>
                                     {courseOutcomes.map(co => (
                                         <td key={co.id} className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                            {/* FIX: Use 'course.target' instead of 'course.targetAttainment'. */}
                                             <span className={`font-semibold ${attainments[co.id] >= course.target ? 'text-green-600' : 'text-red-600'}`}>
                                                 {attainments[co.id]}%
                                             </span>
