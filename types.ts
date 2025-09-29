@@ -11,6 +11,11 @@ export interface User {
   password?: string;
   role: Role;
   name: string;
+  // For Program Co-ordinators: The ID of the single program they manage
+  programId?: string;
+  // For Teachers: ID of the Program Co-ordinator who manages them
+  programCoordinatorId?: string;
+  status?: 'Active' | 'Inactive';
 }
 
 export interface Program {
@@ -33,6 +38,8 @@ export interface Course {
     level1: number;
   };
   status: CourseStatus;
+  // ID of the teacher assigned to the course
+  teacherId?: string | null;
 }
 
 export interface Student {

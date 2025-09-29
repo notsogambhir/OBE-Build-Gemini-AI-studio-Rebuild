@@ -13,6 +13,9 @@ import SettingsScreen from './pages/SettingsScreen';
 import StudentCOAttainmentReport from './pages/StudentCOAttainmentReport';
 import AttainmentReports from './pages/AttainmentReports';
 import StudentsList from './pages/StudentsList';
+import UserManagement from './pages/UserManagement';
+import TeacherManagement from './pages/TeacherManagement';
+import TeacherDetails from './pages/TeacherDetails';
 
 const App: React.FC = () => {
   const { currentUser, selectedProgram, selectedBatch } = useAppContext();
@@ -36,8 +39,11 @@ const App: React.FC = () => {
           <Route path="/courses/:courseId/report" element={<StudentCOAttainmentReport />} />
           <Route path="/program-outcomes" element={<ProgramOutcomesList />} />
           <Route path="/students" element={<StudentsList />} />
+          <Route path="/teachers" element={<TeacherManagement />} />
+          <Route path="/teachers/:teacherId" element={<TeacherDetails />} />
           <Route path="/reports" element={<AttainmentReports />} />
           <Route path="/settings" element={<SettingsScreen />} />
+          <Route path="/user-management" element={<UserManagement />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </MainLayout>

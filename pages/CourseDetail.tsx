@@ -12,11 +12,20 @@ type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'Student Repor
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { data } = useAppContext();
+  const { data, currentUser } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
 
   const course = useMemo(() => data.courses.find(c => c.id === courseId), [courseId, data.courses]);
   
+  if (currentUser?.role === 'Teacher' && course && course.teacherId !== currentUser.id) {
+    return (
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
+            <p className="text-gray-500 mt-2">You are not assigned to this course.</p>
+        </div>
+    );
+  }
+
   if (!course) {
     return <div className="text-center text-red-500 p-8">Course not found.</div>;
   }

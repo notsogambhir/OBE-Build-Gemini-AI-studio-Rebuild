@@ -14,6 +14,14 @@ const ProgramSelectionScreen: React.FC = () => {
         if (currentUser.role === 'Admin' || currentUser.role === 'University') {
             return data.programs;
         }
+        if (currentUser.role === 'Program Co-ordinator') {
+            // New logic: Filter based on the single programId
+            if (currentUser.programId) {
+                return data.programs.filter(p => p.id === currentUser.programId);
+            }
+            return []; // A PC should always have a programId
+        }
+        // Fallback for other roles (like Teacher) who see all programs in their college
         return data.programs.filter(p => p.collegeId === selectedLoginCollege);
     }, [data.programs, currentUser, selectedLoginCollege]);
     

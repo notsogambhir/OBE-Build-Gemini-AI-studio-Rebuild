@@ -18,17 +18,17 @@ const LoginScreen: React.FC = () => {
     };
 
     const handleDeveloperLoginShortcut = () => {
-        const devUser = data.users.find(u => u.username === 'manager'); // Program Co-ordinator
-        const devProgram = data.programs.find(p => p.name === 'BE ECE');
+        const devUser = data.users.find(u => u.username === 'pc_ece'); // New Program Co-ordinator for ECE
+        const devProgram = devUser ? data.programs.find(p => p.id === devUser.programId) : undefined;
 
         if (devUser && devProgram && devUser.password) {
-            const loginSuccess = login(devUser.username, devUser.password, devProgram.collegeId);
+            const loginSuccess = login(devUser.username, devUser.password, 'CUIET');
             if (loginSuccess) {
                 setProgramAndBatch(devProgram, '2025-2029');
                 // No navigation needed, App.tsx will handle the redirect based on state.
             }
         } else {
-            console.error("Developer shortcut failed: Could not find user 'manager', program 'BE ECE', or user password in mockData.");
+            console.error("Developer shortcut failed: Could not find user 'pc_ece' or their assigned program in mockData.");
         }
     };
 
@@ -89,8 +89,8 @@ const LoginScreen: React.FC = () => {
                      <div className="p-4 mt-6 text-sm text-gray-600 bg-gray-50 rounded-lg">
                       <h4 className="font-semibold text-center">Demo Logins (password: "password")</h4>
                       <ul className="mt-2 list-disc list-inside">
-                        <li>Username: <strong>teacher</strong></li>
-                        <li>Username: <strong>manager</strong></li>
+                        <li>Username: <strong>teacher_ece1</strong> (Teacher)</li>
+                        <li>Username: <strong>pc_ece</strong> (PC)</li>
                         <li>Username: <strong>university</strong></li>
                         <li>Username: <strong>admin</strong></li>
                       </ul>

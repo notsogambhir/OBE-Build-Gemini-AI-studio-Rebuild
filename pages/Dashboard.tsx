@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Target, PieChart } from '../components/Icons';
 import StatCard from '../components/StatCard';
 
 const Dashboard: React.FC = () => {
-    const { data, selectedProgram } = useAppContext();
+    const { data, selectedProgram, currentUser } = useAppContext();
     const navigate = useNavigate();
 
-    const programCourses = data.courses.filter(c => c.programId === selectedProgram?.id);
+    const programCourses = useMemo(() => {
+        let courses = data.courses.filter(c => c.programId === selectedProgram?.id);
+        if (currentUser?.role === 'Teacher') {
+            courses = courses.filter(c => c.teacherId === currentUser.id);
+        }
+        return courses;
+    }, [data.courses, selectedProgram, currentUser]);
+
     const programStudents = data.students.filter(s => s.programId === selectedProgram?.id);
     const programPOs = data.programOutcomes.filter(po => po.programId === selectedProgram?.id);
   
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Courses in Program" value={programCourses.length} icon={<BookOpen />} color="blue" />
+                <StatCard title={currentUser?.role === 'Teacher' ? "My Assigned Courses" : "Courses in Program"} value={programCourses.length} icon={<BookOpen />} color="blue" />
                 <StatCard title="Students in Program" value={programStudents.length} icon={<Users />} color="green" />
                 <StatCard title="Program Outcomes" value={programPOs.length} icon={<Target />} color="purple" />
                 <StatCard title="Courses to Assess" value={programCourses.length} icon={<PieChart />} color="red" />

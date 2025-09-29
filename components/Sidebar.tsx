@@ -15,8 +15,10 @@ const Sidebar: React.FC<SidebarProps> = () => {
     { to: '/dashboard', label: 'Dashboard', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
     { to: '/courses', label: 'Courses', icon: <BookOpen />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
     { to: '/students', label: 'Students', icon: <Users />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
+    { to: '/teachers', label: 'Teachers', icon: <Users />, roles: ['Program Co-ordinator'] },
     { to: '/program-outcomes', label: 'Program Outcomes', icon: <Target />, roles: ['Program Co-ordinator', 'Admin'] },
     { to: '/reports', label: 'Attainment Reports', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
+    { to: '/user-management', label: 'User Management', icon: <Users />, roles: ['Admin'] },
     { to: '/settings', label: 'Settings', icon: <Settings />, roles: ['Admin'] },
   ];
   
