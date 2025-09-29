@@ -39,19 +39,25 @@ const AttainmentReports: React.FC = () => {
             const {level3, level2, level1} = course.attainmentLevels;
 
             cosForThisCourse.forEach(co => {
-                let totalMarksObtainedByStudents: { [studentId: string]: number } = {};
-                let totalMaxMarksForCo = 0;
+                // Per-student tracking for dynamic denominators
+                const studentObtainedMarksForCo: { [studentId: string]: number } = {};
+                const studentPossibleMarksForCo: { [studentId:string]: number } = {};
 
                 assessmentsForThisCourse.forEach(assessment => {
                     assessment.questions.forEach(q => {
                         if (q.coIds.includes(co.id)) {
-                            totalMaxMarksForCo += q.maxMarks;
-                            const studentMarks = data.marks.filter(m => m.assessmentId === assessment.id);
-                            studentMarks.forEach(sm => {
+                            // Find all marks submitted for this assessment
+                            const studentMarksForAssessment = data.marks.filter(m => m.assessmentId === assessment.id);
+                            
+                            studentMarksForAssessment.forEach(sm => {
+                                // Only consider students enrolled in this course
                                 if (enrolledStudentIds.has(sm.studentId)) {
                                     const score = sm.scores.find(s => s.q === q.q);
-                                    if (score) {
-                                        totalMarksObtainedByStudents[sm.studentId] = (totalMarksObtainedByStudents[sm.studentId] || 0) + score.marks;
+                                    
+                                    // A score entry being present means the question was attempted
+                                    if (score !== undefined) { 
+                                        studentObtainedMarksForCo[sm.studentId] = (studentObtainedMarksForCo[sm.studentId] || 0) + score.marks;
+                                        studentPossibleMarksForCo[sm.studentId] = (studentPossibleMarksForCo[sm.studentId] || 0) + q.maxMarks;
                                     }
                                 }
                             });
@@ -59,17 +65,20 @@ const AttainmentReports: React.FC = () => {
                     });
                 });
                 
-                if (totalMaxMarksForCo === 0) {
-                    allCoFinalScores[co.id] = { finalScore: 0, percentage: 0 };
-                    return;
-                }
-
                 const studentsMeetingTarget = studentsInCourse.filter(student => {
-                    const marks = totalMarksObtainedByStudents[student.id] || 0;
-                    const percentage = (marks / totalMaxMarksForCo) * 100;
+                    const obtainedMarks = studentObtainedMarksForCo[student.id] || 0;
+                    const possibleMarks = studentPossibleMarksForCo[student.id] || 0;
+                    
+                    // If a student didn't attempt any questions for this CO, their possible marks are 0.
+                    // They cannot meet the target.
+                    if (possibleMarks === 0) {
+                        return false; 
+                    }
+
+                    const percentage = (obtainedMarks / possibleMarks) * 100;
                     return percentage >= course.target;
                 });
-                
+
                 const attainmentPercentage = (studentsMeetingTarget.length / studentsInCourse.length) * 100;
                 
                 let directScore = 0;

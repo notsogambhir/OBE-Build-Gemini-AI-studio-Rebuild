@@ -28,7 +28,7 @@ const ProgramSelectionScreen: React.FC = () => {
         <div className="min-h-screen bg-gray-100 p-8">
             <header className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                   <img src="https://www.chitkara.edu.in/wp-content/uploads/2022/11/chitkara-university-logo.png" alt="Chitkara University Logo" className="h-12" />
+                   <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Logo" className="h-12" />
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800">Select a Program</h1>
                         {currentUser && <p className="text-gray-600">

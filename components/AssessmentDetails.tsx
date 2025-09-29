@@ -34,6 +34,47 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
     
     const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === assessment.courseId);
 
+    const handleQuestionsUpload = (uploadedData: { q: string; maxMarks: string | number }[]) => {
+        if (!assessment) return;
+
+        const newQuestions: AssessmentQuestion[] = uploadedData
+            .filter(row => row.q && row.maxMarks && !isNaN(Number(row.maxMarks)) && Number(row.maxMarks) > 0)
+            .map(row => ({
+                q: String(row.q).trim(),
+                maxMarks: Number(row.maxMarks),
+                coIds: [],
+            }));
+
+        if (newQuestions.length === 0) {
+            alert("No valid questions found in the file. Ensure it has 'q' and 'maxMarks' columns with valid data.");
+            return;
+        }
+
+        setData(prevData => {
+            const updatedAssessments = prevData.assessments.map(a => {
+                if (a.id === assessment.id) {
+                    const existingQuestionNames = new Set(a.questions.map(q => q.q.toLowerCase()));
+                    const uniqueNewQuestions = newQuestions.filter(nq => !existingQuestionNames.has(nq.q.toLowerCase()));
+                    
+                    const addedCount = uniqueNewQuestions.length;
+                    const duplicateCount = newQuestions.length - addedCount;
+                    let alertMessage = `${addedCount} new questions added successfully.`;
+                    if (duplicateCount > 0) {
+                        alertMessage += ` ${duplicateCount} duplicates were ignored.`;
+                    }
+                    alert(alertMessage);
+
+                    return {
+                        ...a,
+                        questions: [...a.questions, ...uniqueNewQuestions],
+                    };
+                }
+                return a;
+            });
+            return { ...prevData, assessments: updatedAssessments };
+        });
+    };
+
     const handleMarksUpload = (uploadedData: any[]) => {
         // FIX: The entire function logic is rewritten to correctly update the global state.
         setData(prev => {
@@ -169,6 +210,16 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
             </div>
 
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                 {canManage && (
+                    <div className="pb-4 mb-4 border-b border-gray-200">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-2">Bulk Upload Questions</h4>
+                        <ExcelUploader<{ q: string; maxMarks: string | number }>
+                            onFileUpload={handleQuestionsUpload}
+                            label="Upload Questions"
+                            format="columns: q, maxMarks"
+                        />
+                    </div>
+                )}
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">Manage Questions & CO Mapping</h3>
                  <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">

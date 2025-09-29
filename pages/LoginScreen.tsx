@@ -21,7 +21,7 @@ const LoginScreen: React.FC = () => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
             <div className="w-full max-w-md p-8">
                 <div className="flex justify-center mb-8">
-                     <img src="https://www.chitkara.edu.in/wp-content/uploads/2022/11/chitkara-university-logo.png" alt="Chitkara University Logo" className="h-20" />
+                     <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Logo" className="h-20" />
                 </div>
                 <div className="bg-white p-8 rounded-xl shadow-2xl">
                     <h2 className="text-3xl font-bold text-center text-red-600 mb-6">LOG IN</h2>

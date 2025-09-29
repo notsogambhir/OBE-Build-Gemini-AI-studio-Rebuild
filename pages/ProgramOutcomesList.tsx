@@ -44,9 +44,9 @@ const ProgramOutcomesList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start">
         <h1 className="text-3xl font-bold text-gray-800">Program Outcomes (POs)</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
             <ExcelUploader<{ number: string; description: string }>
                 onFileUpload={handleExcelUpload}
                 label="Upload POs"

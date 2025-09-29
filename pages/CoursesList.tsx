@@ -12,7 +12,7 @@ const CoursesList: React.FC = () => {
   const [newCourseCode, setNewCourseCode] = useState('');
   const [newCourseName, setNewCourseName] = useState('');
 
-  const isCoordinator = currentUser?.role === 'Program Co-ordinator';
+  const canManageCourses = currentUser?.role === 'Program Co-ordinator' || currentUser?.role === 'Admin';
 
   const programCourses = useMemo(
     () => data.courses.filter((c) => c.programId === selectedProgram?.id).sort((a,b) => a.code.localeCompare(b.code)),
@@ -40,7 +40,8 @@ const CoursesList: React.FC = () => {
     }));
   };
 
-  const handleAddCourse = () => {
+  const handleAddCourse = (e: React.FormEvent) => {
+      e.preventDefault();
       if (!newCourseCode.trim() || !newCourseName.trim() || !selectedProgram) {
         alert("Please provide both a course code and name.");
         return;
@@ -150,7 +151,7 @@ const CoursesList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Courses</h1>
-        {isCoordinator && (
+        {canManageCourses && (
           <ExcelUploader<{ code: string; name: string }>
             onFileUpload={handleExcelUpload}
             label="Bulk Upload Courses"
@@ -159,13 +160,50 @@ const CoursesList: React.FC = () => {
         )}
       </div>
 
+      {canManageCourses && (
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <form onSubmit={handleAddCourse} className="flex flex-wrap md:flex-nowrap gap-4 items-end">
+            <div className="flex-grow">
+              <label htmlFor="new-course-code" className="text-sm font-medium text-gray-600 block">Course Code</label>
+              <input
+                id="new-course-code"
+                type="text"
+                placeholder="e.g. CS101"
+                value={newCourseCode}
+                onChange={e => setNewCourseCode(e.target.value)}
+                className="w-full p-2 mt-1 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400"
+                required
+              />
+            </div>
+            <div className="flex-grow-[2]">
+              <label htmlFor="new-course-name" className="text-sm font-medium text-gray-600 block">Course Name</label>
+              <input
+                id="new-course-name"
+                type="text"
+                placeholder="e.g. Introduction to Programming"
+                value={newCourseName}
+                onChange={e => setNewCourseName(e.target.value)}
+                className="w-full p-2 mt-1 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg h-[42px] w-full md:w-auto"
+            >
+              Add Course
+            </button>
+          </form>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Code</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Name</th>
-              {isCoordinator && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>}
+              {canManageCourses && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>}
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -174,7 +212,7 @@ const CoursesList: React.FC = () => {
               <tr key={course.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{course.code}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{course.name}</td>
-                {isCoordinator && (
+                {canManageCourses && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     <select
                       value={course.status}
@@ -195,39 +233,6 @@ const CoursesList: React.FC = () => {
               </tr>
             ))}
           </tbody>
-          {isCoordinator && (
-            <tfoot className="bg-gray-50/50">
-              <tr>
-                <td className="px-6 py-4">
-                  <input
-                    type="text"
-                    placeholder="New Course Code"
-                    value={newCourseCode}
-                    onChange={e => setNewCourseCode(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400"
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <input
-                    type="text"
-                    placeholder="New Course Name"
-                    value={newCourseName}
-                    onChange={e => setNewCourseName(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400"
-                  />
-                </td>
-                <td></td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={handleAddCourse}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg"
-                  >
-                    Add Course
-                  </button>
-                </td>
-              </tr>
-            </tfoot>
-          )}
         </table>
       </div>
     </div>
