@@ -24,7 +24,8 @@ const App: React.FC = () => {
     return <LoginScreen />;
   }
 
-  if (!selectedProgram || !selectedBatch) {
+  // Allow Admin/University roles to bypass program selection
+  if ((!selectedProgram || !selectedBatch) && currentUser.role !== 'Admin' && currentUser.role !== 'University') {
     return <ProgramSelectionScreen />;
   }
 
