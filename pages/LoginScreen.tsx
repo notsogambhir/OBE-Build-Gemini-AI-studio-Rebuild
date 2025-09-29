@@ -3,7 +3,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { College } from '../types';
 
 const LoginScreen: React.FC = () => {
-    const { login, data } = useAppContext();
+    const { login, data, setProgramAndBatch } = useAppContext();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [college, setCollege] = useState<College>(data.colleges[0]?.id || 'CUIET');
@@ -17,10 +17,25 @@ const LoginScreen: React.FC = () => {
         }
     };
 
+    const handleDeveloperLoginShortcut = () => {
+        const devUser = data.users.find(u => u.username === 'manager'); // Program Co-ordinator
+        const devProgram = data.programs.find(p => p.name === 'BE ECE');
+
+        if (devUser && devProgram && devUser.password) {
+            const loginSuccess = login(devUser.username, devUser.password, devProgram.collegeId);
+            if (loginSuccess) {
+                setProgramAndBatch(devProgram, '2025-2029');
+                // No navigation needed, App.tsx will handle the redirect based on state.
+            }
+        } else {
+            console.error("Developer shortcut failed: Could not find user 'manager', program 'BE ECE', or user password in mockData.");
+        }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
             <div className="w-full max-w-md p-8">
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center mb-8" onDoubleClick={handleDeveloperLoginShortcut}>
                      <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Logo" className="h-20" />
                 </div>
                 <div className="bg-white p-8 rounded-xl shadow-2xl">

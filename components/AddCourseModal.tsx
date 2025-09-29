@@ -11,7 +11,7 @@ interface AddCourseModalProps {
 const AddCourseModal: React.FC<AddCourseModalProps> = ({ onClose, onAdd, programId }) => {
     const [code, setCode] = useState('');
     const [name, setName] = useState('');
-    const [target, setTarget] = useState(60);
+    const [target, setTarget] = useState(50);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,9 +21,9 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ onClose, onAdd, program
             code,
             name,
             target,
-            internalWeightage: 40,
-            externalWeightage: 60,
-            attainmentLevels: { level3: 80, level2: 70, level1: 60 },
+            internalWeightage: 25,
+            externalWeightage: 75,
+            attainmentLevels: { level3: 80, level2: 70, level1: 50 },
             status: 'Future', // Default status for new courses
         };
         onAdd(newCourse);

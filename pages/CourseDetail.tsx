@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import ManageCourseOutcomes from '../components/ManageCourseOutcomes';
 import ManageCourseAssessments from '../components/ManageCourseAssessments';
 import CoPoMappingMatrix from '../components/CoPoMappingMatrix';
 import CourseOverviewTab from '../components/CourseOverviewTab';
+import StudentCOAttainmentReport from './StudentCOAttainmentReport';
 import { Course } from '../types';
 
-type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping';
+type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'Student Reports';
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const navigate = useNavigate();
   const { data } = useAppContext();
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
 
@@ -21,7 +21,7 @@ const CourseDetail: React.FC = () => {
     return <div className="text-center text-red-500 p-8">Course not found.</div>;
   }
 
-  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping'];
+  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping', 'Student Reports'];
 
   const renderContent = () => {
     switch (activeTab) {
@@ -30,11 +30,11 @@ const CourseDetail: React.FC = () => {
       case 'COs':
         return <ManageCourseOutcomes />;
       case 'Assessments':
-        // FIX: Passed the `course` prop to `ManageCourseAssessments` to satisfy its required props.
         return <ManageCourseAssessments course={course} />;
       case 'CO-PO Mapping':
-        // FIX: CoPoMappingMatrix fetches its own data via context, so it does not require props.
         return <CoPoMappingMatrix />;
+      case 'Student Reports':
+        return <StudentCOAttainmentReport />;
       default:
         return null;
     }
@@ -47,12 +47,6 @@ const CourseDetail: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-800">{course.name} ({course.code})</h1>
           <p className="text-gray-500">Manage course details, outcomes, and assessments.</p>
         </div>
-         <button 
-            onClick={() => navigate(`/courses/${courseId}/report`)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"
-          >
-            View Student Report
-        </button>
       </div>
 
       <div className="border-b border-gray-200">

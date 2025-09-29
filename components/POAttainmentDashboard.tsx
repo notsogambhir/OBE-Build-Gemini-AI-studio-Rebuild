@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useMemo } from 'react';
 import { ProgramOutcome } from '../types';
 
@@ -22,18 +16,49 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
   }, [programOutcomes]);
   
   const [indirectAttainment, setIndirectAttainment] = useState<{ [poId: string]: string }>({});
-  const [weights, setWeights] = useState({ direct: '80', indirect: '20' });
+  const [weights, setWeights] = useState({ direct: 90, indirect: 10 });
 
   const handleIndirectChange = (poId: string, value: string) => {
     setIndirectAttainment(prev => ({ ...prev, [poId]: value }));
   };
   
+  const handleWeightChange = (type: 'direct' | 'indirect', value: string) => {
+    const numValue = parseInt(value, 10);
+    // Ignore invalid inputs to prevent weird states
+    if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+        return; 
+    }
+
+    if (type === 'direct') {
+        setWeights({
+            direct: numValue,
+            indirect: 100 - numValue
+        });
+    } else { // type === 'indirect'
+        setWeights({
+            direct: 100 - numValue,
+            indirect: numValue
+        });
+    }
+  };
+
   const calculateOverall = (poId: string) => {
     const direct = directAttainment[poId] || 0;
-    const indirect = parseFloat(indirectAttainment[poId]) || 0;
-    const directWeight = parseFloat(weights.direct) / 100 || 0;
-    const indirectWeight = parseFloat(weights.indirect) / 100 || 0;
-    if (direct === 0 && indirect === 0) return '0.00';
+    
+    // Requirement: Default indirect attainment is 3
+    const indirectValue = indirectAttainment[poId];
+    const indirect = (indirectValue === undefined || indirectValue.trim() === '') 
+      ? 3 
+      : parseFloat(indirectValue);
+
+    // Handle case where user enters non-numeric text
+    if (isNaN(indirect)) {
+        return 'Invalid';
+    }
+
+    const directWeight = weights.direct / 100;
+    const indirectWeight = weights.indirect / 100;
+    
     return (direct * directWeight + indirect * indirectWeight).toFixed(2);
   };
   
@@ -47,7 +72,6 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
               <th className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">Attainment Type</th>
               <th className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">Target</th>
               {programOutcomes.map(po => (
-                // FIX: Use 'po.number' instead of 'po.code' for the header.
                 <th key={po.id} className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">{po.number}</th>
               ))}
             </tr>
@@ -57,7 +81,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
               <td className="border border-gray-300 p-2 font-semibold text-gray-700">Direct</td>
               <td className="border border-gray-300 p-1">
                 <div className="flex items-center">
-                    <input type="number" value={weights.direct} onChange={e => setWeights({...weights, direct: e.target.value})} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
+                    <input type="number" value={weights.direct} onChange={e => handleWeightChange('direct', e.target.value)} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
                     <span className="ml-1 text-gray-700">%</span>
                 </div>
               </td>
@@ -69,7 +93,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
               <td className="border border-gray-300 p-2 font-semibold text-gray-700">Indirect</td>
                <td className="border border-gray-300 p-1">
                  <div className="flex items-center">
-                    <input type="number" value={weights.indirect} onChange={e => setWeights({...weights, indirect: e.target.value})} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
+                    <input type="number" value={weights.indirect} onChange={e => handleWeightChange('indirect', e.target.value)} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
                     <span className="ml-1 text-gray-700">%</span>
                 </div>
               </td>
@@ -79,7 +103,8 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
                     type="number"
                     step="0.1"
                     className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center"
-                    value={indirectAttainment[po.id] || ''}
+                    placeholder="3"
+                    value={indirectAttainment[po.id] ?? ''}
                     onChange={(e) => handleIndirectChange(po.id, e.target.value)}
                   />
                 </td>

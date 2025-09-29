@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CourseOutcome } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
@@ -10,9 +10,29 @@ const ManageCourseOutcomes: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { data, setData, currentUser } = useAppContext();
 
+  // Get course outcomes from global state
+  const outcomes = useMemo(
+    () => data.courseOutcomes.filter(co => co.courseId === courseId),
+    [data.courseOutcomes, courseId]
+  );
+
+  // Auto-generate the next CO number
+  const nextCoNumber = useMemo(() => {
+    const highestNum = outcomes.reduce((max, co) => {
+      const num = parseInt(co.number.replace('CO', ''), 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+    return `CO${highestNum + 1}`;
+  }, [outcomes]);
+
   // State for the new CO form
-  const [newCoNumber, setNewCoNumber] = useState('');
+  const [newCoNumber, setNewCoNumber] = useState(nextCoNumber);
   const [newCoDescription, setNewCoDescription] = useState('');
+
+  // Update the auto-generated number if the outcomes list changes
+  useEffect(() => {
+    setNewCoNumber(nextCoNumber);
+  }, [nextCoNumber]);
 
   // State for inline editing
   const [editingCoId, setEditingCoId] = useState<string | null>(null);
@@ -21,11 +41,6 @@ const ManageCourseOutcomes: React.FC = () => {
   // Permissions
   const canManage = currentUser?.role === 'Teacher' || currentUser?.role === 'Program Co-ordinator';
 
-  // Get course outcomes from global state
-  const outcomes = useMemo(
-    () => data.courseOutcomes.filter(co => co.courseId === courseId),
-    [data.courseOutcomes, courseId]
-  );
 
   const handleExcelUpload = (uploadedData: { code: string; description: string }[]) => {
     if (!courseId) return;
@@ -46,8 +61,8 @@ const ManageCourseOutcomes: React.FC = () => {
   };
 
   const handleAddCo = () => {
-    if (!newCoNumber.trim() || !newCoDescription.trim() || !courseId) {
-        alert("Please fill in both CO Code and Description.");
+    if (!newCoDescription.trim() || !courseId) {
+        alert("Please fill in the Description.");
         return;
     }
     const newCo: CourseOutcome = {
@@ -63,7 +78,6 @@ const ManageCourseOutcomes: React.FC = () => {
     }));
 
     // Reset form
-    setNewCoNumber('');
     setNewCoDescription('');
   };
   
@@ -168,10 +182,9 @@ const ManageCourseOutcomes: React.FC = () => {
                     <td className="px-6 py-4">
                         <input
                             type="text"
-                            placeholder="e.g. CO4"
                             value={newCoNumber}
-                            onChange={(e) => setNewCoNumber(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+                            readOnly
+                            className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed focus:ring-0 focus:border-gray-300"
                         />
                     </td>
                     <td className="px-6 py-4">

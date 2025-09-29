@@ -46,10 +46,18 @@ const ManageCourseAssessments: React.FC<ManageCourseAssessmentsProps> = ({ cours
       <div className="space-y-4">
         {assessments.map(assessment => {
           const totalMaxMarks = assessment.questions.reduce((sum, q) => sum + q.maxMarks, 0);
+          const hasMarks = data.marks.some(m => m.assessmentId === assessment.id);
           return (
             <div key={assessment.id} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center border border-gray-200">
               <div>
-                <p className="font-semibold text-gray-800">{assessment.name}</p>
+                <p className="font-semibold text-gray-800 flex items-center">
+                  {assessment.name}
+                  {hasMarks && (
+                    <span className="ml-2 text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                      ✓ Marks Uploaded
+                    </span>
+                  )}
+                </p>
                 <p className="text-sm text-gray-500">{assessment.type} | Max Marks: {totalMaxMarks}</p>
               </div>
               <div className="space-x-4">
