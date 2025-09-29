@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useAppContext } from '../hooks/useAppContext';
 import { Role } from '../types';
@@ -122,24 +122,27 @@ const AttainmentReports: React.FC = () => {
 
     const [selectedCourseId, setSelectedCourseId] = useState<string>('');
     
-    useEffect(() => {
-        if (attainmentData?.coursesInProgram && attainmentData.coursesInProgram.length > 0) {
-            if (!selectedCourseId || !attainmentData.coursesInProgram.find(c => c.id === selectedCourseId)) {
-               setSelectedCourseId(attainmentData.coursesInProgram[0].id);
-            }
-        }
+    // FIX: Removed problematic `useEffect`. We derive the effective course ID to use for display
+    // which is a more stable pattern and avoids re-render cycles.
+    const effectiveSelectedCourseId = useMemo(() => {
+        const courses = attainmentData?.coursesInProgram;
+        if (!courses || courses.length === 0) return '';
+        
+        const isCurrentSelectionValid = selectedCourseId && courses.some(c => c.id === selectedCourseId);
+        
+        return isCurrentSelectionValid ? selectedCourseId : courses[0].id;
     }, [attainmentData, selectedCourseId]);
 
     const selectedCourseReportData = useMemo(() => {
-        if(!selectedCourseId || !attainmentData) return null;
-        const course = attainmentData.coursesInProgram.find(c => c.id === selectedCourseId);
+        if(!effectiveSelectedCourseId || !attainmentData) return null;
+        const course = attainmentData.coursesInProgram.find(c => c.id === effectiveSelectedCourseId);
         if (!course) return null;
 
-        const cos = data.courseOutcomes.filter(co => co.courseId === selectedCourseId);
+        const cos = data.courseOutcomes.filter(co => co.courseId === effectiveSelectedCourseId);
         const coScores = cos.map(co => ({...co, ...(attainmentData.allCoFinalScores[co.id] || { finalScore: 0, percentage: 0 })}));
 
         return { course, cos: coScores };
-    }, [selectedCourseId, attainmentData, data.courseOutcomes]);
+    }, [effectiveSelectedCourseId, attainmentData, data.courseOutcomes]);
 
     const coChartData = useMemo(() => ({
         labels: selectedCourseReportData?.cos.map(co => co.number) || [],
@@ -179,7 +182,7 @@ const AttainmentReports: React.FC = () => {
                         <label htmlFor="course-select" className="block text-sm font-medium text-gray-700">Select Course to View Details</label>
                         <select
                             id="course-select"
-                            value={selectedCourseId}
+                            value={effectiveSelectedCourseId}
                             onChange={(e) => setSelectedCourseId(e.target.value)}
                             className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-gray-900 bg-white border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
