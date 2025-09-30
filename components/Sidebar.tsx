@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import {
-    PieChart, BookOpen, Users, Target, Settings, ArrowLeft
+    PieChart, BookOpen, Users, Target, Settings, ArrowLeft, Grid
 } from './Icons';
 import { Program } from '../types';
 
@@ -15,12 +15,14 @@ const getProgramDuration = (programName: string): number => {
 
 
 const Sidebar: React.FC = () => {
-  const { currentUser, data, selectedProgram, selectedBatch, setProgramAndBatch, goBackToProgramSelection } = useAppContext();
+  // FIX: Destructure selectedCollegeId and setSelectedCollegeId from context.
+  const { currentUser, data, selectedProgram, selectedBatch, setProgramAndBatch, goBackToProgramSelection, selectedCollegeId, setSelectedCollegeId } = useAppContext();
   const navigate = useNavigate();
 
   const isHighLevelUser = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'University');
   
-  const [selectedCollegeId, setSelectedCollegeId] = useState<string>(selectedProgram?.collegeId || '');
+  // FIX: Removed local state for selectedCollegeId to use the one from global context.
+  // const [selectedCollegeId, setSelectedCollegeId] = useState<string>(selectedProgram?.collegeId || '');
 
   const programsForSelectedCollege = useMemo(() => {
     if (!selectedCollegeId) return [];
@@ -36,21 +38,24 @@ const Sidebar: React.FC = () => {
 
   const handleCollegeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCollegeId = e.target.value;
-    setSelectedCollegeId(newCollegeId);
+    // FIX: Use context setter to update the global state. Handle empty string value from select.
+    setSelectedCollegeId(newCollegeId || null); 
     goBackToProgramSelection(); 
+    navigate('/program-selection');
   };
 
   const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newProgramId = e.target.value;
     if (!newProgramId) {
         goBackToProgramSelection();
+        navigate('/program-selection');
         return;
     }
     const program = data.programs.find(p => p.id === newProgramId);
     if (program) {
         const duration = getProgramDuration(program.name);
         const defaultBatch = `${new Date().getFullYear()}-${new Date().getFullYear() + duration}`;
-        setSelectedCollegeId(program.collegeId); // Keep college dropdown in sync
+        // FIX: setSelectedCollegeId is now handled inside setProgramAndBatch for consistency.
         setProgramAndBatch(program, defaultBatch);
     }
   };
@@ -62,34 +67,38 @@ const Sidebar: React.FC = () => {
   };
 
   const allMenuItems = [
+    // Standard Links
     { to: '/dashboard', label: 'Dashboard', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
-    { to: '/department/students', label: 'Student Management', icon: <Users />, roles: ['Department'] },
-    { to: '/department/faculty', label: 'Faculty Management', icon: <Users />, roles: ['Department'] },
     { to: '/courses', label: 'Courses', icon: <BookOpen />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
     { to: '/students', label: 'Students', icon: <Users />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
     { to: '/teachers', label: 'Teachers', icon: <Users />, roles: ['Program Co-ordinator'] },
     { to: '/program-outcomes', label: 'Program Outcomes', icon: <Target />, roles: ['Program Co-ordinator', 'Admin'] },
     { to: '/reports', label: 'Attainment Reports', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
-    { to: '/user-management', label: 'User Management', icon: <Users />, roles: ['Admin'] },
-    { to: '/settings', label: 'Settings', icon: <Settings />, roles: ['Admin'] },
+
+    // Department Links
+    { to: '/department/students', label: 'Student Management', icon: <Users />, roles: ['Department'] },
+    { to: '/department/faculty', label: 'Faculty Management', icon: <Users />, roles: ['Department'] },
+    
+    // New Direct Admin Links
+    { to: '/admin/academic-structure', label: 'Academic Structure', icon: <Grid />, roles: ['Admin'] },
+    { to: '/admin/user-management', label: 'User Management', icon: <Users />, roles: ['Admin'] },
+    { to: '/admin/system-settings', label: 'System Settings', icon: <Settings />, roles: ['Admin'] },
   ];
   
   const menuItems = allMenuItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
   return (
-    <aside className="w-64 bg-white shadow-md flex-col hidden sm:flex">
-        <div className="flex items-center justify-center p-6 border-b">
-           <button onClick={() => navigate(-1)} className="flex items-center text-gray-800 hover:text-indigo-600 transition-colors">
-             <ArrowLeft className="w-5 h-5 mr-2" />
-             <span className="font-semibold">Back</span>
-           </button>
+    <aside className="w-64 bg-white shadow-md flex flex-col hidden sm:flex h-screen">
+        <div className="flex items-center justify-center p-6 border-b flex-shrink-0">
+           <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Chitkara University Logo" className="h-10" />
         </div>
 
         {isHighLevelUser && (
-            <div className="p-4 space-y-4 border-b">
+            <div className="p-4 space-y-4 border-b flex-shrink-0">
                 <div>
                     <label htmlFor="college-select" className="block text-sm font-medium text-gray-700">College</label>
-                    <select id="college-select" value={selectedCollegeId} onChange={handleCollegeChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    {/* FIX: Use selectedCollegeId from context and handle null case. */}
+                    <select id="college-select" value={selectedCollegeId || ''} onChange={handleCollegeChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                         <option value="">-- Select College --</option>
                         {data.colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
@@ -111,7 +120,7 @@ const Sidebar: React.FC = () => {
             </div>
         )}
 
-      <nav className="flex-1 px-4 py-6">
+      <nav className="flex-1 px-4 py-6 overflow-y-auto">
         {menuItems.map(item => (
           <NavLink
             key={item.to}

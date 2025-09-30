@@ -4,6 +4,21 @@ export type College = 'CUIET' | 'CCP' | 'CBS';
 export type CourseStatus = 'Active' | 'Completed' | 'Future';
 export type StudentStatus = 'Active' | 'Inactive';
 
+// --- System-wide Settings ---
+export interface SystemSettings {
+  defaultCoTarget: number;
+  defaultAttainmentLevels: {
+    level3: number;
+    level2: number;
+    level1: number;
+  };
+  defaultWeights: {
+    direct: number;
+    indirect: number;
+  };
+}
+
+
 // --- Data Structures ---
 export interface User {
   id: string;
@@ -142,4 +157,5 @@ export interface AppData {
   coPoMapping: CoPoMapping[];
   assessments: Assessment[];
   marks: Mark[];
+  settings: SystemSettings;
 }

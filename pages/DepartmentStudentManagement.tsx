@@ -227,13 +227,13 @@ const DepartmentStudentManagement: React.FC = () => {
                                             <td className="px-6 py-4 font-medium">{student.id}</td>
                                             <td className="px-6 py-4">{student.name}</td>
                                             <td className="px-6 py-4">
-                                                <select value={student.sectionId || ''} onChange={e => handleStudentChange(student.id, 'sectionId', e.target.value || null)} className="p-1 border rounded-md bg-white text-gray-900 w-full">
+                                                <select value={student.sectionId || ''} onChange={e => handleStudentChange(student.id, 'sectionId', e.target.value || null)} className="p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm w-full">
                                                     <option value="">-- Unassigned --</option>
                                                     {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                                 </select>
                                             </td>
                                             <td className="px-6 py-4">
-                                                 <select value={student.status} onChange={e => handleStudentChange(student.id, 'status', e.target.value as StudentStatus)} className="p-1 border rounded-md bg-white text-gray-900 w-full">
+                                                 <select value={student.status} onChange={e => handleStudentChange(student.id, 'status', e.target.value as StudentStatus)} className="p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm w-full">
                                                     <option value="Active">Active</option>
                                                     <option value="Inactive">Inactive</option>
                                                 </select>

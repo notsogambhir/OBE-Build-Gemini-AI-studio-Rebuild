@@ -9,6 +9,9 @@ interface AppContextType {
   selectedLoginCollege: College | null;
   selectedProgram: Program | null;
   selectedBatch: string | null;
+  // FIX: Add selectedCollegeId to context to be globally accessible for high-level users (Admin/University).
+  selectedCollegeId: string | null;
+  setSelectedCollegeId: React.Dispatch<React.SetStateAction<string | null>>;
   login: (username: string, password: string, college: College) => boolean;
   logout: () => void;
   setProgramAndBatch: (program: Program, batch: string) => void;
@@ -23,6 +26,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [selectedLoginCollege, setSelectedLoginCollege] = useState<College | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
+  // FIX: Add state for selectedCollegeId to make it available throughout the app.
+  const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null);
 
   const login = useCallback((username: string, password: string, college: College) => {
     const user = data.users.find(
@@ -33,6 +38,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (user) {
       setCurrentUser(user);
       setSelectedLoginCollege(college);
+      // Reset program selection on new login for non-high-level users
+      if (user.role !== 'Admin' && user.role !== 'University' && user.role !== 'Department') {
+        setSelectedProgram(null);
+        setSelectedBatch(null);
+      }
       return true;
     }
     return false;
@@ -43,11 +53,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setSelectedLoginCollege(null);
     setSelectedProgram(null);
     setSelectedBatch(null);
+    // FIX: Clear selectedCollegeId on logout.
+    setSelectedCollegeId(null);
   }, []);
 
   const setProgramAndBatch = useCallback((program: Program, batch: string) => {
     setSelectedProgram(program);
     setSelectedBatch(batch);
+    // FIX: Keep selectedCollegeId in sync when a program is selected.
+    setSelectedCollegeId(program.collegeId);
   }, []);
 
   const goBackToProgramSelection = useCallback(() => {
@@ -67,6 +81,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       selectedBatch,
       setProgramAndBatch,
       goBackToProgramSelection,
+      // FIX: Expose selectedCollegeId and its setter through the context.
+      selectedCollegeId,
+      setSelectedCollegeId,
     }),
     [
       data,
@@ -78,6 +95,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       selectedBatch,
       setProgramAndBatch,
       goBackToProgramSelection,
+      selectedCollegeId,
     ]
   );
 

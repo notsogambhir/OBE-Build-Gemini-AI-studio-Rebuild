@@ -90,7 +90,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
               <td className="border border-gray-300 p-2 font-semibold text-gray-700">Direct</td>
               <td className="border border-gray-300 p-1">
                 <div className="flex items-center">
-                    <input type="number" value={weights.direct} onChange={e => handleWeightChange('direct', e.target.value)} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
+                    <input type="number" value={weights.direct} onChange={e => handleWeightChange('direct', e.target.value)} className="w-24 p-2 bg-white text-gray-900 border border-gray-300 rounded-md text-center focus:ring-indigo-500 focus:border-indigo-500" />
                     <span className="ml-1 text-gray-700">%</span>
                 </div>
               </td>
@@ -102,7 +102,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
               <td className="border border-gray-300 p-2 font-semibold text-gray-700">Indirect</td>
                <td className="border border-gray-300 p-1">
                  <div className="flex items-center">
-                    <input type="number" value={weights.indirect} onChange={e => handleWeightChange('indirect', e.target.value)} className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center" />
+                    <input type="number" value={weights.indirect} onChange={e => handleWeightChange('indirect', e.target.value)} className="w-24 p-2 bg-white text-gray-900 border border-gray-300 rounded-md text-center focus:ring-indigo-500 focus:border-indigo-500" />
                     <span className="ml-1 text-gray-700">%</span>
                 </div>
               </td>
@@ -111,7 +111,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
                   <input
                     type="number"
                     step="0.1"
-                    className="w-20 bg-white border border-gray-300 text-gray-900 p-1 rounded-md text-center"
+                    className="w-24 p-2 bg-white text-gray-900 border border-gray-300 rounded-md text-center focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="3"
                     value={indirectAttainment[po.id] ?? ''}
                     onChange={(e) => handleIndirectChange(po.id, e.target.value)}

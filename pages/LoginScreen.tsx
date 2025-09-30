@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { College } from '../types';
 
 const LoginScreen: React.FC = () => {
     const { login, data, setProgramAndBatch } = useAppContext();
+    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [college, setCollege] = useState<College>(data.colleges[0]?.id || 'CUIET');
@@ -12,20 +14,21 @@ const LoginScreen: React.FC = () => {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (!login(username, password, college)) {
+        if (login(username, password, college)) {
+            navigate('/');
+        } else {
             setError('Invalid username or password.');
         }
     };
 
     const handleDeveloperLoginShortcut = () => {
-        const devUser = data.users.find(u => u.username === 'pc_ece'); // New Program Co-ordinator for ECE
+        const devUser = data.users.find(u => u.username === 'pc_ece');
         const devProgram = devUser ? data.programs.find(p => p.id === devUser.programId) : undefined;
 
         if (devUser && devProgram && devUser.password) {
-            const loginSuccess = login(devUser.username, devUser.password, 'CUIET');
-            if (loginSuccess) {
+            if (login(devUser.username, devUser.password, 'CUIET')) {
                 setProgramAndBatch(devProgram, '2025-2029');
-                // No navigation needed, App.tsx will handle the redirect based on state.
+                navigate('/');
             }
         } else {
             console.error("Developer shortcut failed: Could not find user 'pc_ece' or their assigned program in mockData.");
@@ -33,7 +36,7 @@ const LoginScreen: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex flex-col items-center justify-center h-full bg-gray-100">
             <div className="w-full max-w-md p-8">
                 <div className="flex justify-center mb-8" onDoubleClick={handleDeveloperLoginShortcut}>
                      <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Logo" className="h-20" />

@@ -1,6 +1,18 @@
 import { AppData } from './types';
 
 export const initialData: AppData = {
+  settings: {
+    defaultCoTarget: 50,
+    defaultAttainmentLevels: {
+      level3: 80,
+      level2: 70,
+      level1: 50,
+    },
+    defaultWeights: {
+      direct: 90,
+      indirect: 10,
+    },
+  },
   users: [
     // Admins
     { id: 'U_ADMIN', username: 'admin', password: 'password', role: 'Admin', name: 'Admin User' },

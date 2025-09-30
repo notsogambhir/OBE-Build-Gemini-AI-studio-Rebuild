@@ -143,7 +143,7 @@ const DepartmentFacultyManagement: React.FC = () => {
                                     <tr key={program.id}>
                                         <td className="px-6 py-4 font-medium">{program.name}</td>
                                         <td className="px-6 py-4">
-                                            <select value={draftPcAssignments[program.id] || ''} onChange={e => handleProgramAssignmentChange(program.id, e.target.value)} className="p-2 border rounded-md bg-white text-gray-900 w-full max-w-xs">
+                                            <select value={draftPcAssignments[program.id] || ''} onChange={e => handleProgramAssignmentChange(program.id, e.target.value)} className="p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-xs">
                                                  <option value="">-- Unassigned --</option>
                                                  {programCoordinators.map(pc => <option key={pc.id} value={pc.id}>{pc.name}</option>)}
                                             </select>

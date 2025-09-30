@@ -223,7 +223,7 @@ const CoursesList: React.FC = () => {
                                          <select
                                              value={course.teacherId || ''}
                                              onChange={(e) => handleAssignTeacherChange(course.id, e.target.value)}
-                                             className="p-1 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                                             className="p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                          >
                                              <option value="">-- Unassigned --</option>
                                              {teachersForPC.map(teacher => (
@@ -234,7 +234,7 @@ const CoursesList: React.FC = () => {
                                 )}
                                 {canManageCourses && (
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        <select value={course.status} onChange={(e) => promptStatusChange([course.id], e.target.value as CourseStatus)} className="p-1 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <select value={course.status} onChange={(e) => promptStatusChange([course.id], e.target.value as CourseStatus)} className="p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                             <option value="Future">Future</option>
                                             <option value="Active">Active</option>
                                             <option value="Completed">Completed</option>
