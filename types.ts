@@ -22,6 +22,7 @@ export interface SystemSettings {
 // --- Data Structures ---
 export interface User {
   id: string;
+  employeeId: string;
   username: string;
   password?: string;
   role: Role;

@@ -1,21 +1,28 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Link } from 'react-router-dom';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const TeacherManagement: React.FC = () => {
     const { data, setData, currentUser } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [confirmation, setConfirmation] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    } | null>(null);
 
     const managedTeachers = useMemo(() => {
         if (currentUser?.role !== 'Program Co-ordinator') return [];
         
-        // FIX: Check if the coordinator's ID is in the teacher's programCoordinatorIds array.
         let teachers = data.users.filter(u => u.role === 'Teacher' && u.programCoordinatorIds?.includes(currentUser.id));
 
         if (searchTerm) {
             const lowercasedFilter = searchTerm.toLowerCase();
             teachers = teachers.filter(teacher =>
-                teacher.name.toLowerCase().includes(lowercasedFilter)
+                teacher.name.toLowerCase().includes(lowercasedFilter) ||
+                teacher.employeeId.toLowerCase().includes(lowercasedFilter)
             );
         }
         
@@ -23,10 +30,18 @@ const TeacherManagement: React.FC = () => {
     }, [data.users, currentUser, searchTerm]);
 
     const handleStatusChange = (teacherId: string, status: 'Active' | 'Inactive') => {
-        setData(prev => ({
-            ...prev,
-            users: prev.users.map(u => u.id === teacherId ? { ...u, status } : u)
-        }));
+        setConfirmation({
+            isOpen: true,
+            title: "Confirm Status Change",
+            message: "Are you sure you want to change this teacher's status?",
+            onConfirm: () => {
+                setData(prev => ({
+                    ...prev,
+                    users: prev.users.map(u => u.id === teacherId ? { ...u, status } : u)
+                }));
+                setConfirmation(null);
+            }
+        });
     };
 
     return (
@@ -38,7 +53,7 @@ const TeacherManagement: React.FC = () => {
                 <div className="p-4 border-b">
                   <input
                     type="text"
-                    placeholder="Search by Teacher Name..."
+                    placeholder="Search by Teacher Name or Employee ID..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
@@ -48,6 +63,7 @@ const TeacherManagement: React.FC = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -58,6 +74,9 @@ const TeacherManagement: React.FC = () => {
                                 <tr key={teacher.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {teacher.name}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {teacher.employeeId}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <select
@@ -78,7 +97,7 @@ const TeacherManagement: React.FC = () => {
                             ))
                         ) : (
                              <tr>
-                                <td colSpan={3} className="text-center py-8 text-gray-500">
+                                <td colSpan={4} className="text-center py-8 text-gray-500">
                                     No teachers found.
                                 </td>
                             </tr>
@@ -86,6 +105,16 @@ const TeacherManagement: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            {confirmation && (
+                <ConfirmationModal 
+                    isOpen={confirmation.isOpen}
+                    title={confirmation.title}
+                    message={confirmation.message}
+                    onConfirm={confirmation.onConfirm}
+                    onClose={() => setConfirmation(null)}
+                />
+            )}
         </div>
     );
 };
