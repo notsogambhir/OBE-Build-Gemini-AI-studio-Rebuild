@@ -5,17 +5,37 @@ import ExcelUploader from '../components/ExcelUploader';
 import StudentDetailsModal from '../components/StudentDetailsModal';
 
 const StudentsList: React.FC = () => {
-  const { selectedProgram, data, setData, currentUser } = useAppContext();
+  const { selectedProgram, selectedBatch, data, setData, currentUser, selectedCollegeId } = useAppContext();
   
   const [newStudentId, setNewStudentId] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  const canManage = currentUser?.role === 'Program Co-ordinator' || currentUser?.role === 'Admin';
+  const isAdmin = currentUser?.role === 'Admin';
+  const isProgramCoordinator = currentUser?.role === 'Program Co-ordinator';
+  const canManage = isProgramCoordinator || isAdmin;
 
-  const programStudents = useMemo(() => {
-    let students = data.students.filter(s => s.programId === selectedProgram?.id);
+  const { filteredStudents, pageTitle, subTitle } = useMemo(() => {
+    let students: Student[];
+        
+    if (isAdmin) {
+        students = data.students;
+        if (selectedProgram) {
+            students = students.filter(s => s.programId === selectedProgram.id);
+            if (selectedBatch) {
+                const sectionsForBatch = data.sections.filter(s => s.programId === selectedProgram.id && s.batch === selectedBatch);
+                const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
+                students = students.filter(s => s.sectionId && sectionIdsForBatch.has(s.sectionId));
+            }
+        } else if (selectedCollegeId) {
+            const programIdsInCollege = new Set(data.programs.filter(p => p.collegeId === selectedCollegeId).map(p => p.id));
+            students = students.filter(s => programIdsInCollege.has(s.programId));
+        }
+    } else { // Teacher or PC
+        students = data.students.filter(s => s.programId === selectedProgram?.id);
+    }
+
     if (searchTerm) {
       const lowercasedFilter = searchTerm.toLowerCase();
       students = students.filter(student =>
@@ -23,8 +43,29 @@ const StudentsList: React.FC = () => {
         student.id.toLowerCase().includes(lowercasedFilter)
       );
     }
-    return students.sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.students, selectedProgram, searchTerm]);
+    
+    const title = isAdmin
+      ? selectedProgram
+          ? `Students in ${selectedProgram.name}`
+          : selectedCollegeId
+              ? `Students in ${data.colleges.find(c => c.id === selectedCollegeId)?.name}`
+              : 'All Students'
+      : 'Student Management';
+
+    const subtitle = isAdmin
+      ? selectedBatch && selectedProgram
+          ? `Displaying batch ${selectedBatch}`
+          : 'Select a college and program to see students.'
+      : `Manage students for the ${selectedProgram?.name} program.`;
+      
+    return {
+      filteredStudents: students.sort((a, b) => a.name.localeCompare(b.name)),
+      pageTitle: title,
+      subTitle: subtitle
+    }
+  }, [data.students, data.programs, data.sections, data.colleges, selectedProgram, selectedBatch, currentUser, selectedCollegeId, searchTerm, isAdmin]);
+  
+  const canAddStudents = canManage && (isProgramCoordinator || (isAdmin && selectedProgram));
 
   const handleStatusChange = (studentId: string, newStatus: StudentStatus) => {
     setData(prev => ({
@@ -62,7 +103,10 @@ const StudentsList: React.FC = () => {
   };
 
   const handleExcelUpload = (uploadedData: { id: string; name: string }[]) => {
-    if (!selectedProgram) return;
+    if (!selectedProgram) {
+        alert("Please select a program before bulk uploading students.");
+        return;
+    }
     const existingStudentIds = new Set(data.students.map(s => s.id.toLowerCase()));
     const newStudents: Student[] = uploadedData
       .filter(row => row.id && row.name && !existingStudentIds.has(String(row.id).toLowerCase()))
@@ -78,10 +122,10 @@ const StudentsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Student Management</h1>
-      <p className="text-gray-500">Manage students for the {selectedProgram?.name} program.</p>
+      <h1 className="text-3xl font-bold text-gray-800">{pageTitle}</h1>
+      <p className="text-gray-500">{subTitle}</p>
       
-      {canManage && (
+      {canAddStudents && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-700">Add Students</h2>
@@ -125,7 +169,7 @@ const StudentsList: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {programStudents.map((student) => (
+            {filteredStudents.map((student) => (
               <tr key={student.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.id}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{student.name}</td>

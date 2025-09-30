@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
-import { Course, CourseStatus, Enrollment, User, Section } from '../types';
+import { Course, CourseStatus, Enrollment, User } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
 import { ChevronDown, ChevronUp } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -30,7 +30,7 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode; c
 };
 
 const CoursesList: React.FC = () => {
-    const { selectedProgram, selectedBatch, data, setData, currentUser } = useAppContext();
+    const { selectedProgram, selectedBatch, data, setData, currentUser, selectedCollegeId } = useAppContext();
     const navigate = useNavigate();
 
     // State for course management
@@ -51,35 +51,64 @@ const CoursesList: React.FC = () => {
     const canManageCourses = isProgramCoordinator || isAdmin;
 
     // Filter and sort courses by status
-    const { activeCourses, futureCourses, completedCourses, teachersForPC } = useMemo(() => {
-        let courses = data.courses.filter((c) => c.programId === selectedProgram?.id);
-        
-        // Teacher's view: filter to only their assigned courses
-        if (currentUser?.role === 'Teacher') {
-            courses = courses.filter(c => c.teacherId === currentUser.id);
-        }
+    const { activeCourses, futureCourses, completedCourses, teachersForPC, pageTitle } = useMemo(() => {
+        let courses: Course[];
 
+        if (isAdmin) {
+            courses = data.courses;
+            if (selectedProgram) {
+                courses = courses.filter(c => c.programId === selectedProgram.id);
+            } else if (selectedCollegeId) {
+                const programIdsInCollege = new Set(data.programs.filter(p => p.collegeId === selectedCollegeId).map(p => p.id));
+                courses = courses.filter(c => programIdsInCollege.has(c.programId));
+            }
+        } else if (currentUser?.role === 'Teacher') {
+            courses = data.courses.filter(c => 
+                c.teacherId === currentUser.id || 
+                (c.sectionTeacherIds && Object.values(c.sectionTeacherIds).includes(currentUser.id))
+            );
+        } else { // Program Co-ordinator
+            courses = data.courses.filter((c) => c.programId === selectedProgram?.id);
+        }
+        
         courses = courses.sort((a, b) => a.code.localeCompare(b.code));
 
-        // PC's view: get list of teachers they manage for the assignment dropdown
         let teachersForPC: User[] = [];
         if (isProgramCoordinator) {
             const myManagedTeacherIds = new Set(data.users
                 .filter(u => u.role === 'Teacher' && u.programCoordinatorIds?.includes(currentUser.id))
                 .map(u => u.id));
             teachersForPC = data.users.filter(u => myManagedTeacherIds.has(u.id));
+        } else if (isAdmin) {
+             teachersForPC = data.users.filter(u => u.role === 'Teacher');
         }
+
+        const title = isAdmin
+            ? selectedProgram
+                ? `Courses for ${selectedProgram.name}`
+                : selectedCollegeId
+                    ? `Courses in ${data.colleges.find(c => c.id === selectedCollegeId)?.name}`
+                    : 'All Courses'
+            : currentUser?.role === 'Teacher'
+                ? 'My Assigned Courses'
+                : 'Courses';
 
         return {
             activeCourses: courses.filter(c => c.status === 'Active'),
             futureCourses: courses.filter(c => c.status === 'Future'),
             completedCourses: courses.filter(c => c.status === 'Completed'),
-            teachersForPC
+            teachersForPC,
+            pageTitle: title
         };
-    }, [data.courses, data.users, selectedProgram, currentUser]);
+    }, [data.courses, data.users, data.programs, data.colleges, selectedProgram, currentUser, selectedCollegeId, isProgramCoordinator, isAdmin]);
     
+    const canAddCourse = canManageCourses && (isProgramCoordinator || (isAdmin && selectedProgram));
+
     const handleExcelUpload = (uploadedData: { code: string; name: string }[]) => {
-        if (!selectedProgram) return;
+        if (!selectedProgram) {
+             alert("Please select a program before bulk uploading courses.");
+             return;
+        }
         const newCourses: Course[] = uploadedData.map((row, index) => ({
             id: `c_excel_${Date.now()}_${index}`, code: row.code || 'N/A', name: row.name || 'Untitled Course',
             programId: selectedProgram.id, target: 50, internalWeightage: 25, externalWeightage: 75,
@@ -145,6 +174,10 @@ const CoursesList: React.FC = () => {
             message = `Are you sure you want to mark ${ids.length} selected courses as ${newStatus}?`;
         }
         if (newStatus === 'Active') {
+            if (!selectedBatch) {
+                alert("Please select a batch from the sidebar before activating a course.");
+                return;
+            }
             message += ` This will enroll all active students from the ${selectedBatch} batch into the course.`;
         }
         setConfirmation({
@@ -207,7 +240,7 @@ const CoursesList: React.FC = () => {
                             {canManageCourses && <th className="p-4 text-left"><input type="checkbox" checked={areAllSelected} onChange={() => handleToggleSelectAll(courseIds)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" /></th>}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Code</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Name</th>
-                            {isProgramCoordinator && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Teacher</th>}
+                            {(isProgramCoordinator || isAdmin) && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Teacher</th>}
                             {canManageCourses && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>}
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -218,7 +251,7 @@ const CoursesList: React.FC = () => {
                                 {canManageCourses && <td className="p-4"><input type="checkbox" checked={selectedCourseIds.includes(course.id)} onChange={() => handleToggleSelection(course.id)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" /></td>}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{course.code}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{course.name}</td>
-                                {isProgramCoordinator && (
+                                {(isProgramCoordinator || isAdmin) && (
                                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                                          <select
                                              value={course.teacherId || ''}
@@ -255,7 +288,7 @@ const CoursesList: React.FC = () => {
     if (currentUser?.role === 'Teacher') {
         return (
            <div className="space-y-8">
-              <h1 className="text-3xl font-bold text-gray-800">My Assigned Courses</h1>
+              <h1 className="text-3xl font-bold text-gray-800">{pageTitle}</h1>
               <div className="bg-white rounded-lg shadow-md">
                 <h2 className="text-xl font-bold text-gray-800 p-4 border-b">Active Courses ({activeCourses.length})</h2>
                 {renderCourseTable(activeCourses)}
@@ -273,11 +306,11 @@ const CoursesList: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Courses</h1>
-                {canManageCourses && (<ExcelUploader<{ code: string; name: string }> onFileUpload={handleExcelUpload} label="Bulk Upload" format="cols: code, name" />)}
+                <h1 className="text-3xl font-bold text-gray-800">{pageTitle}</h1>
+                {canAddCourse && (<ExcelUploader<{ code: string; name: string }> onFileUpload={handleExcelUpload} label="Bulk Upload" format="cols: code, name" />)}
             </div>
 
-            {canManageCourses && (
+            {canAddCourse && (
                 <div className="bg-white p-4 rounded-lg shadow-md">
                     <form onSubmit={handleAddCourse} className="flex flex-wrap md:flex-nowrap gap-4 items-end">
                         <div className="flex-grow"><label htmlFor="new-course-code" className="text-sm font-medium text-gray-600 block">Course Code</label><input id="new-course-code" type="text" placeholder="e.g. CS101" value={newCourseCode} onChange={e => setNewCourseCode(e.target.value)} className="w-full p-2 mt-1 border border-gray-300 rounded-md bg-white text-gray-900" required /></div>
