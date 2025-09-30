@@ -1,11 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { ProgramOutcome } from '../types';
 
+interface DashboardState {
+    weights: { direct: number; indirect: number; };
+    indirectAttainment: { [poId: string]: string; };
+}
 interface POAttainmentDashboardProps {
   programOutcomes: ProgramOutcome[];
+  draftState: DashboardState;
+  onStateChange: (newState: DashboardState) => void;
 }
 
-const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOutcomes }) => {
+const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOutcomes, draftState, onStateChange }) => {
+  const { weights, indirectAttainment } = draftState;
+
   // Mock direct attainment values for demonstration
   const directAttainment = useMemo(() => {
     const attainment: { [poId: string]: number } = {};
@@ -15,29 +23,32 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
     return attainment;
   }, [programOutcomes]);
   
-  const [indirectAttainment, setIndirectAttainment] = useState<{ [poId: string]: string }>({});
-  const [weights, setWeights] = useState({ direct: 90, indirect: 10 });
 
   const handleIndirectChange = (poId: string, value: string) => {
-    setIndirectAttainment(prev => ({ ...prev, [poId]: value }));
+    onStateChange({
+        ...draftState,
+        indirectAttainment: {
+            ...indirectAttainment,
+            [poId]: value
+        }
+    });
   };
   
   const handleWeightChange = (type: 'direct' | 'indirect', value: string) => {
     const numValue = parseInt(value, 10);
-    // Ignore invalid inputs to prevent weird states
     if (isNaN(numValue) || numValue < 0 || numValue > 100) {
         return; 
     }
 
     if (type === 'direct') {
-        setWeights({
-            direct: numValue,
-            indirect: 100 - numValue
+        onStateChange({
+            ...draftState,
+            weights: { direct: numValue, indirect: 100 - numValue }
         });
     } else { // type === 'indirect'
-        setWeights({
-            direct: 100 - numValue,
-            indirect: numValue
+         onStateChange({
+            ...draftState,
+            weights: { direct: 100 - numValue, indirect: numValue }
         });
     }
   };
@@ -45,13 +56,11 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
   const calculateOverall = (poId: string) => {
     const direct = directAttainment[poId] || 0;
     
-    // Requirement: Default indirect attainment is 3
     const indirectValue = indirectAttainment[poId];
     const indirect = (indirectValue === undefined || indirectValue.trim() === '') 
       ? 3 
       : parseFloat(indirectValue);
 
-    // Handle case where user enters non-numeric text
     if (isNaN(indirect)) {
         return 'Invalid';
     }
@@ -70,7 +79,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
           <thead className="bg-gray-50">
             <tr>
               <th className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">Attainment Type</th>
-              <th className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">Target</th>
+              <th className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">Weightage</th>
               {programOutcomes.map(po => (
                 <th key={po.id} className="border border-gray-300 p-2 text-sm font-medium text-gray-500 uppercase">{po.number}</th>
               ))}

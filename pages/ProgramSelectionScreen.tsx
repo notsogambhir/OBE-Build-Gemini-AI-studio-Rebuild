@@ -54,7 +54,7 @@ const ProgramSelectionScreen: React.FC = () => {
             </header>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {programs.map(program => (
-                    <div 
+                    <button 
                         key={program.id}
                         onClick={() => handleProgramSelect(program)}
                         className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center"
@@ -64,7 +64,7 @@ const ProgramSelectionScreen: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-bold text-gray-800">{program.name}</h3>
                         <p className="text-sm text-gray-500">{data.colleges.find(c => c.id === program.collegeId)?.name}</p>
-                    </div>
+                    </button>
                 ))}
             </div>
             {isModalOpen && selectedProgramForBatch && (

@@ -1,5 +1,5 @@
 // --- Enums and Basic Types ---
-export type Role = 'Teacher' | 'Program Co-ordinator' | 'University' | 'Admin';
+export type Role = 'Teacher' | 'Program Co-ordinator' | 'University' | 'Admin' | 'Department';
 export type College = 'CUIET' | 'CCP' | 'CBS';
 export type CourseStatus = 'Active' | 'Completed' | 'Future';
 export type StudentStatus = 'Active' | 'Inactive';
@@ -14,8 +14,12 @@ export interface User {
   // For Program Co-ordinators: The ID of the single program they manage
   programId?: string;
   // For Teachers: ID of the Program Co-ordinator who manages them
-  programCoordinatorId?: string;
+  programCoordinatorIds?: string[];
   status?: 'Active' | 'Inactive';
+  // For Department: The ID of the college they manage
+  collegeId?: College;
+  // For Program Co-ordinators: ID of the Department Head who manages them
+  departmentId?: string;
 }
 
 export interface Program {
@@ -38,8 +42,10 @@ export interface Course {
     level1: number;
   };
   status: CourseStatus;
-  // ID of the teacher assigned to the course
+  // ID of the teacher assigned to the course (default)
   teacherId?: string | null;
+  // Section-specific teacher assignments
+  sectionTeacherIds?: { [sectionId: string]: string };
 }
 
 export interface Student {
@@ -47,11 +53,20 @@ export interface Student {
   name: string;
   programId: string;
   status: StudentStatus;
+  sectionId?: string | null;
 }
 
 export interface Enrollment {
   courseId: string;
   studentId: string;
+  sectionId?: string | null;
+}
+
+export interface Section {
+  id: string;
+  name: string;
+  programId: string;
+  batch: string;
 }
 
 export interface CourseOutcome {
@@ -121,6 +136,7 @@ export interface AppData {
   courses: Course[];
   students: Student[];
   enrollments: Enrollment[];
+  sections: Section[];
   courseOutcomes: CourseOutcome[];
   programOutcomes: ProgramOutcome[];
   coPoMapping: CoPoMapping[];

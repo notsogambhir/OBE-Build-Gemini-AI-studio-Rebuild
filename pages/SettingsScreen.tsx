@@ -1,7 +1,3 @@
-
-
-import React from 'react';
-
 const SettingsScreen: React.FC = () => {
   return (
     <div className="space-y-6">

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ProgramOutcome } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
 import { useAppContext } from '../hooks/useAppContext';
 import POAttainmentDashboard from '../components/POAttainmentDashboard';
 import { Trash2 } from '../components/Icons';
 import AddProgramOutcomeModal from '../components/AddProgramOutcomeModal';
+import SaveBar from '../components/SaveBar';
 
 const ProgramOutcomesList: React.FC = () => {
   const { selectedProgram, data, setData } = useAppContext();
@@ -13,6 +14,30 @@ const ProgramOutcomesList: React.FC = () => {
   const programOutcomes = useMemo(() =>
     data.programOutcomes.filter(po => po.programId === selectedProgram?.id)
   , [data.programOutcomes, selectedProgram?.id]);
+
+  // State management for the dashboard
+  const [originalState, setOriginalState] = useState({ weights: { direct: 90, indirect: 10 }, indirectAttainment: {} as {[poId: string]: string} });
+  const [draftState, setDraftState] = useState(originalState);
+  
+  // Reset state if program changes
+  useEffect(() => {
+    const initialState = { weights: { direct: 90, indirect: 10 }, indirectAttainment: {} };
+    setDraftState(initialState);
+    setOriginalState(initialState);
+  }, [selectedProgram?.id]);
+
+  const isDirty = useMemo(() => JSON.stringify(originalState) !== JSON.stringify(draftState), [originalState, draftState]);
+
+  const handleSave = () => {
+    // In a real app, this would persist to a backend.
+    // Here, we'll just commit the draft state to be the new "original" state for this session.
+    setOriginalState(draftState);
+    alert("Attainment values have been saved for this session.");
+  };
+
+  const handleCancel = () => {
+    setDraftState(originalState);
+  };
 
   const handleExcelUpload = (uploadedData: { number: string; description: string }[]) => {
     if (!selectedProgram) return;
@@ -43,7 +68,7 @@ const ProgramOutcomesList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex justify-between items-start">
         <h1 className="text-3xl font-bold text-gray-800">Program Outcomes (POs)</h1>
         <div className="flex items-start gap-4">
@@ -76,12 +101,17 @@ const ProgramOutcomesList: React.FC = () => {
         </ul>
       </div>
       
-      <POAttainmentDashboard programOutcomes={programOutcomes} />
+      <POAttainmentDashboard 
+        programOutcomes={programOutcomes}
+        draftState={draftState}
+        onStateChange={setDraftState}
+      />
       
       {isModalOpen && (
         <AddProgramOutcomeModal onClose={() => setModalOpen(false)} />
       )}
-
+      
+      <SaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
     </div>
   );
 };

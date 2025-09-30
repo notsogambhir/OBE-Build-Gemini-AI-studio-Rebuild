@@ -16,12 +16,30 @@ import StudentsList from './pages/StudentsList';
 import UserManagement from './pages/UserManagement';
 import TeacherManagement from './pages/TeacherManagement';
 import TeacherDetails from './pages/TeacherDetails';
+import DepartmentStudentManagement from './pages/DepartmentStudentManagement';
+import DepartmentFacultyManagement from './pages/DepartmentFacultyManagement';
 
 const App: React.FC = () => {
   const { currentUser, selectedProgram, selectedBatch } = useAppContext();
 
   if (!currentUser) {
     return <LoginScreen />;
+  }
+
+  // Department user gets a dedicated view and doesn't select a program
+  if (currentUser.role === 'Department') {
+    return (
+      <HashRouter>
+        <MainLayout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/department/students" replace />} />
+            <Route path="/department/students" element={<DepartmentStudentManagement />} />
+            <Route path="/department/faculty" element={<DepartmentFacultyManagement />} />
+            <Route path="*" element={<Navigate to="/department/students" replace />} />
+          </Routes>
+        </MainLayout>
+      </HashRouter>
+    );
   }
 
   // Allow Admin/University roles to bypass program selection

@@ -91,6 +91,9 @@ const LoginScreen: React.FC = () => {
                       <ul className="mt-2 list-disc list-inside">
                         <li>Username: <strong>teacher_ece1</strong> (Teacher)</li>
                         <li>Username: <strong>pc_ece</strong> (PC)</li>
+                        <li>Username: <strong>dept_cuiet</strong> (Dept, CUIET)</li>
+                        <li>Username: <strong>dept_ccp</strong> (Dept, CCP)</li>
+                        <li>Username: <strong>dept_cbs</strong> (Dept, CBS)</li>
                         <li>Username: <strong>university</strong></li>
                         <li>Username: <strong>admin</strong></li>
                       </ul>

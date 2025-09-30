@@ -6,9 +6,10 @@ import ManageCourseAssessments from '../components/ManageCourseAssessments';
 import CoPoMappingMatrix from '../components/CoPoMappingMatrix';
 import CourseOverviewTab from '../components/CourseOverviewTab';
 import StudentCOAttainmentReport from './StudentCOAttainmentReport';
+import CourseFacultyAssignment from '../components/CourseFacultyAssignment';
 import { Course } from '../types';
 
-type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'Student Reports';
+type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'Student Reports' | 'Faculty Assignment';
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -30,7 +31,16 @@ const CourseDetail: React.FC = () => {
     return <div className="text-center text-red-500 p-8">Course not found.</div>;
   }
 
-  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping', 'Student Reports'];
+  const isCoordinator = currentUser?.role === 'Program Co-ordinator';
+
+  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping'];
+
+  if (isCoordinator) {
+    tabs.push('Faculty Assignment');
+  }
+  
+  tabs.push('Student Reports');
+
 
   const renderContent = () => {
     switch (activeTab) {
@@ -42,6 +52,8 @@ const CourseDetail: React.FC = () => {
         return <ManageCourseAssessments course={course} />;
       case 'CO-PO Mapping':
         return <CoPoMappingMatrix />;
+      case 'Faculty Assignment':
+        return isCoordinator ? <CourseFacultyAssignment course={course} /> : null;
       case 'Student Reports':
         return <StudentCOAttainmentReport />;
       default:

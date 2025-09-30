@@ -63,6 +63,8 @@ const Sidebar: React.FC = () => {
 
   const allMenuItems = [
     { to: '/dashboard', label: 'Dashboard', icon: <PieChart />, roles: ['Teacher', 'Program Co-ordinator', 'University', 'Admin'] },
+    { to: '/department/students', label: 'Student Management', icon: <Users />, roles: ['Department'] },
+    { to: '/department/faculty', label: 'Faculty Management', icon: <Users />, roles: ['Department'] },
     { to: '/courses', label: 'Courses', icon: <BookOpen />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
     { to: '/students', label: 'Students', icon: <Users />, roles: ['Teacher', 'Program Co-ordinator', 'Admin'] },
     { to: '/teachers', label: 'Teachers', icon: <Users />, roles: ['Program Co-ordinator'] },

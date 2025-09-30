@@ -9,7 +9,8 @@ const TeacherManagement: React.FC = () => {
     const managedTeachers = useMemo(() => {
         if (currentUser?.role !== 'Program Co-ordinator') return [];
         
-        let teachers = data.users.filter(u => u.role === 'Teacher' && u.programCoordinatorId === currentUser.id);
+        // FIX: Check if the coordinator's ID is in the teacher's programCoordinatorIds array.
+        let teachers = data.users.filter(u => u.role === 'Teacher' && u.programCoordinatorIds?.includes(currentUser.id));
 
         if (searchTerm) {
             const lowercasedFilter = searchTerm.toLowerCase();

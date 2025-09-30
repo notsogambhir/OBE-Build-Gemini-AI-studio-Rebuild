@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
-import { Course, CourseStatus, Enrollment, User } from '../types';
+import { Course, CourseStatus, Enrollment, User, Section } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
 import { ChevronDown, ChevronUp } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -30,7 +30,7 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode; c
 };
 
 const CoursesList: React.FC = () => {
-    const { selectedProgram, data, setData, currentUser } = useAppContext();
+    const { selectedProgram, selectedBatch, data, setData, currentUser } = useAppContext();
     const navigate = useNavigate();
 
     // State for course management
@@ -64,7 +64,10 @@ const CoursesList: React.FC = () => {
         // PC's view: get list of teachers they manage for the assignment dropdown
         let teachersForPC: User[] = [];
         if (isProgramCoordinator) {
-            teachersForPC = data.users.filter(u => u.role === 'Teacher' && u.programCoordinatorId === currentUser.id);
+            const myManagedTeacherIds = new Set(data.users
+                .filter(u => u.role === 'Teacher' && u.programCoordinatorIds?.includes(currentUser.id))
+                .map(u => u.id));
+            teachersForPC = data.users.filter(u => myManagedTeacherIds.has(u.id));
         }
 
         return {
@@ -103,10 +106,25 @@ const CoursesList: React.FC = () => {
             const updatedCourses = prev.courses.map(c => {
                 if (ids.includes(c.id)) {
                     if (newStatus === 'Active' && c.status !== 'Active') {
-                        const activeStudents = prev.students.filter(s => s.programId === c.programId && s.status === 'Active');
-                        const existingEnrollments = new Set(newEnrollments.filter(e => e.courseId === c.id).map(e => e.studentId));
-                        const enrollmentsToAdd = activeStudents.filter(s => !existingEnrollments.has(s.id)).map(s => ({ courseId: c.id, studentId: s.id }));
-                        newEnrollments.push(...enrollmentsToAdd);
+                         if (selectedProgram && selectedBatch) {
+                            const sectionsForBatch = prev.sections.filter(s => s.programId === selectedProgram.id && s.batch === selectedBatch);
+                            const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
+                    
+                            const activeStudentsForBatch = prev.students.filter(s => 
+                                s.programId === selectedProgram.id && 
+                                s.status === 'Active' &&
+                                s.sectionId &&
+                                sectionIdsForBatch.has(s.sectionId)
+                            );
+                    
+                            const existingEnrollments = new Set(newEnrollments.filter(e => e.courseId === c.id).map(e => e.studentId));
+                            
+                            const enrollmentsToAdd = activeStudentsForBatch
+                                .filter(s => !existingEnrollments.has(s.id))
+                                .map(s => ({ courseId: c.id, studentId: s.id, sectionId: s.sectionId }));
+                                
+                            newEnrollments.push(...enrollmentsToAdd);
+                        }
                     }
                     return { ...c, status: newStatus };
                 }
@@ -125,6 +143,9 @@ const CoursesList: React.FC = () => {
             message = `Are you sure you want to mark '${courseName}' as ${newStatus}?`;
         } else {
             message = `Are you sure you want to mark ${ids.length} selected courses as ${newStatus}?`;
+        }
+        if (newStatus === 'Active') {
+            message += ` This will enroll all active students from the ${selectedBatch} batch into the course.`;
         }
         setConfirmation({
             isOpen: true, title: 'Confirm Status Change', message,

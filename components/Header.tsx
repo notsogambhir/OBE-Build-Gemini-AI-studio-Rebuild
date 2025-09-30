@@ -19,6 +19,7 @@ const Header: React.FC = () => {
                     <button 
                         onClick={goBackToProgramSelection}
                         title="Program Selection"
+                        aria-label="Program Selection"
                         className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
                     >
                         <Grid className="w-6 h-6" />
@@ -26,6 +27,7 @@ const Header: React.FC = () => {
                     <button 
                         onClick={logout} 
                         title="Logout"
+                        aria-label="Logout"
                         className="p-2 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
                     >
                         <LogOut className="w-6 h-6" />
