@@ -1,0 +1,136 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { CoPoMapping, CoPoMap } from '../types';
+import { useAppContext } from '../hooks/useAppContext';
+import SaveBar from './SaveBar';
+
+
+const CoPoMappingMatrix: React.FC = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const { data, setData, currentUser } = useAppContext();
+  
+  const canManage = currentUser?.role === 'Teacher' || currentUser?.role === 'Program Co-ordinator';
+
+  const { courseOutcomes, programOutcomes, initialMapArray } = useMemo(() => {
+    if (!data) return { courseOutcomes: [], programOutcomes: [], initialMapArray: [] };
+    const course = data.courses.find(c => c.id === courseId);
+    return {
+      courseOutcomes: data.courseOutcomes.filter(co => co.courseId === courseId),
+      programOutcomes: data.programOutcomes.filter(po => po.programId === course?.programId),
+      initialMapArray: data.coPoMapping.filter(m => m.courseId === courseId),
+    };
+  }, [courseId, data]);
+  
+  const [draftMapping, setDraftMapping] = useState<CoPoMap>({});
+  const [initialMapping, setInitialMapping] = useState<CoPoMap>({});
+
+  useEffect(() => {
+    const map: CoPoMap = {};
+    for (const co of courseOutcomes) {
+      map[co.id] = {};
+    }
+    for (const m of initialMapArray) {
+      if (map[m.coId]) {
+        map[m.coId][m.poId] = m.level;
+      }
+    }
+    setDraftMapping(map);
+    setInitialMapping(map);
+  }, [courseOutcomes, initialMapArray]);
+
+  const isDirty = useMemo(() => JSON.stringify(draftMapping) !== JSON.stringify(initialMapping), [draftMapping, initialMapping]);
+
+  const handleMappingChange = (coId: string, poId: string, value: string) => {
+    const level = parseInt(value, 10);
+    if (isNaN(level) || level < 0 || level > 3) return;
+    
+    setDraftMapping(prev => ({
+      ...prev,
+      [coId]: {
+        ...prev[coId],
+        [poId]: level
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    if (!courseId || !setData) return;
+    
+    const newMappingArray: CoPoMapping[] = [];
+    Object.keys(draftMapping).forEach(coId => {
+      Object.keys(draftMapping[coId]).forEach(poId => {
+        const level = draftMapping[coId][poId];
+        if (level > 0) {
+          newMappingArray.push({ courseId, coId, poId, level });
+        }
+      });
+    });
+    
+    // TODO: Replace with API call
+    setData(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          coPoMapping: [
+            ...prev.coPoMapping.filter(m => m.courseId !== courseId),
+            ...newMappingArray
+          ]
+        }
+    });
+    
+    setInitialMapping(draftMapping); // Set the new saved state as the initial state
+    alert("Mapping saved successfully!");
+  };
+
+  const handleCancel = () => {
+    setDraftMapping(initialMapping);
+  };
+
+  return (
+    <div className="space-y-6 pb-20">
+      <h2 className="text-xl font-semibold text-gray-700">CO-PO Mapping Matrix</h2>
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="border border-gray-300 p-2 text-xs font-medium text-gray-500 uppercase">CO</th>
+              {programOutcomes.map(po => (
+                <th key={po.id} className="border border-gray-300 p-2 text-xs font-medium text-gray-500 uppercase" title={po.description}>
+                  {po.number}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {courseOutcomes.map(co => (
+              <tr key={co.id} className="bg-white hover:bg-gray-50">
+                <td className="border border-gray-300 p-2 text-sm font-medium text-gray-900" title={co.description}>
+                  {co.number}
+                </td>
+                {programOutcomes.map(po => (
+                  <td key={po.id} className="border border-gray-300 p-1">
+                    <select
+                      value={draftMapping[co.id]?.[po.id] || 0}
+                      onChange={(e) => handleMappingChange(co.id, po.id, e.target.value)}
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                      disabled={!canManage}
+                    >
+                      <option value="0">-</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                    </select>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <SaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
+    </div>
+  );
+};
+
+export default CoPoMappingMatrix;
