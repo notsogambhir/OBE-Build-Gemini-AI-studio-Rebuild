@@ -13,7 +13,6 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ userToEdit, onClose }) =>
     
     const [user, setUser] = useState<Partial<User>>({
         id: userToEdit?.id || `U_${Date.now()}`,
-        employeeId: userToEdit?.employeeId || '',
         name: userToEdit?.name || '',
         username: userToEdit?.username || '',
         password: '',
@@ -38,7 +37,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ userToEdit, onClose }) =>
         e.preventDefault();
 
         // Validation
-        if (!user.name || !user.username || !user.employeeId || (!userToEdit && !user.password)) {
+        if (!user.name || !user.username || (!userToEdit && !user.password)) {
             alert('Please fill all required fields.');
             return;
         }
@@ -73,9 +72,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ userToEdit, onClose }) =>
                         <label className="block text-sm font-medium text-gray-700">Full Name</label>
                         <input type="text" value={user.name} onChange={e => handleInputChange('name', e.target.value)} className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
                     </div>
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Employee ID</label>
-                        <input type="text" value={user.employeeId} onChange={e => handleInputChange('employeeId', e.target.value)} className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Role</label>
+                        <select value={user.role} onChange={e => handleInputChange('role', e.target.value)} className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Username</label>
@@ -84,12 +85,6 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ userToEdit, onClose }) =>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Password</label>
                         <input type="password" value={user.password} onChange={e => handleInputChange('password', e.target.value)} className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder={userToEdit ? 'Leave blank to keep unchanged' : ''} required={!userToEdit} />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Role</label>
-                        <select value={user.role} onChange={e => handleInputChange('role', e.target.value)} className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                            {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
                     </div>
                 </div>
 

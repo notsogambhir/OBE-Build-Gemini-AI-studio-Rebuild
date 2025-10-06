@@ -15,50 +15,50 @@ export const initialData: AppData = {
   },
   users: [
     // Admins
-    { id: 'U_ADMIN', employeeId: 'ADM001', username: 'admin', password: 'password', role: 'Admin', name: 'Admin User' },
-    { id: 'U_UNIV', employeeId: 'UNV001', username: 'university', password: 'password', role: 'University', name: 'Dean Adams' },
+    { id: 'U_ADMIN', username: 'admin', password: 'password', role: 'Admin', name: 'Admin User' },
+    { id: 'U_UNIV', username: 'university', password: 'password', role: 'University', name: 'Dean Adams' },
     // New Department Role
-    { id: 'DEPT_CUIET', employeeId: 'DPT001', username: 'dept_cuiet', password: 'password', role: 'Department', name: 'Dr. Head CUIET', collegeId: 'CUIET' },
-    { id: 'DEPT_CCP', employeeId: 'DPT002', username: 'dept_ccp', password: 'password', role: 'Department', name: 'Dr. Head CCP', collegeId: 'CCP' },
-    { id: 'DEPT_CBS', employeeId: 'DPT003', username: 'dept_cbs', password: 'password', role: 'Department', name: 'Dr. Head CBS', collegeId: 'CBS' },
+    { id: 'DEPT_CUIET', username: 'dept_cuiet', password: 'password', role: 'Department', name: 'Dr. Head CUIET', collegeId: 'CUIET' },
+    { id: 'DEPT_CCP', username: 'dept_ccp', password: 'password', role: 'Department', name: 'Dr. Head CCP', collegeId: 'CCP' },
+    { id: 'DEPT_CBS', username: 'dept_cbs', password: 'password', role: 'Department', name: 'Dr. Head CBS', collegeId: 'CBS' },
     
     // --- CUIET Staff ---
     // PC for BE ME (P1)
-    { id: 'PC_ME', employeeId: 'PC011', username: 'pc_me', password: 'password', role: 'Program Co-ordinator', name: 'Mr. Mehra', programId: 'P1', departmentId: 'DEPT_CUIET' },
+    { id: 'PC_ME', username: 'pc_me', password: 'password', role: 'Program Co-ordinator', name: 'Mr. Mehra', programId: 'P1', departmentId: 'DEPT_CUIET' },
     // Teachers under Mr. Mehra
-    { id: 'T_ME_1', employeeId: 'TCH201', username: 'teacher_me1', password: 'password', role: 'Teacher', name: 'Prof. Anjali', programCoordinatorIds: ['PC_ME'], status: 'Active' },
-    { id: 'T_ME_2', employeeId: 'TCH202', username: 'teacher_me2', password: 'password', role: 'Teacher', name: 'Dr. Singh', programCoordinatorIds: ['PC_ME'], status: 'Active' },
-    { id: 'T_ME_3', employeeId: 'TCH203', username: 'teacher_me3', password: 'password', role: 'Teacher', name: 'Ms. Gupta', programCoordinatorIds: ['PC_ME'], status: 'Active' },
+    { id: 'T_ME_1', username: 'teacher_me1', password: 'password', role: 'Teacher', name: 'Prof. Anjali', programCoordinatorIds: ['PC_ME'], status: 'Active' },
+    { id: 'T_ME_2', username: 'teacher_me2', password: 'password', role: 'Teacher', name: 'Dr. Singh', programCoordinatorIds: ['PC_ME'], status: 'Active' },
+    { id: 'T_ME_3', username: 'teacher_me3', password: 'password', role: 'Teacher', name: 'Ms. Gupta', programCoordinatorIds: ['PC_ME'], status: 'Active' },
 
     // PC for BE ECE (P2)
-    { id: 'PC_ECE', employeeId: 'PC012', username: 'pc_ece', password: 'password', role: 'Program Co-ordinator', name: 'Ms. Jones', programId: 'P2', departmentId: 'DEPT_CUIET' },
+    { id: 'PC_ECE', username: 'pc_ece', password: 'password', role: 'Program Co-ordinator', name: 'Ms. Jones', programId: 'P2', departmentId: 'DEPT_CUIET' },
     // Teachers under Ms. Jones
-    { id: 'T_ECE_1', employeeId: 'TCH301', username: 'teacher_ece1', password: 'password', role: 'Teacher', name: 'Dr. Smith', programCoordinatorIds: ['PC_ECE'], status: 'Active' },
-    { id: 'T_ECE_2', employeeId: 'TCH302', username: 'teacher_ece2', password: 'password', role: 'Teacher', name: 'Prof. Davis', programCoordinatorIds: ['PC_ECE'], status: 'Active' },
-    { id: 'T_ECE_3', employeeId: 'TCH303', username: 'teacher_ece3', password: 'password', role: 'Teacher', name: 'Mr. Wilson', programCoordinatorIds: ['PC_ECE', 'PC_ME'], status: 'Active' }, // Shared teacher
+    { id: 'T_ECE_1', username: 'teacher_ece1', password: 'password', role: 'Teacher', name: 'Dr. Smith', programCoordinatorIds: ['PC_ECE'], status: 'Active' },
+    { id: 'T_ECE_2', username: 'teacher_ece2', password: 'password', role: 'Teacher', name: 'Prof. Davis', programCoordinatorIds: ['PC_ECE'], status: 'Active' },
+    { id: 'T_ECE_3', username: 'teacher_ece3', password: 'password', role: 'Teacher', name: 'Mr. Wilson', programCoordinatorIds: ['PC_ECE', 'PC_ME'], status: 'Active' }, // Shared teacher
 
     // --- CCP Staff ---
     // PC for B. Pharma (P3)
-    { id: 'PC_BPHARMA', employeeId: 'PC021', username: 'pc_bpharma', password: 'password', role: 'Program Co-ordinator', name: 'Dr. Patel', programId: 'P3', departmentId: 'DEPT_CCP' },
+    { id: 'PC_BPHARMA', username: 'pc_bpharma', password: 'password', role: 'Program Co-ordinator', name: 'Dr. Patel', programId: 'P3', departmentId: 'DEPT_CCP' },
     // Teachers under Dr. Patel
-    { id: 'T_BPHARMA_1', employeeId: 'TCH401', username: 'teacher_bpharma1', password: 'password', role: 'Teacher', name: 'Ms. Chen', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
-    { id: 'T_BPHARMA_2', employeeId: 'TCH402', username: 'teacher_bpharma2', password: 'password', role: 'Teacher', name: 'Dr. Reddy', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
-    { id: 'T_BPHARMA_3', employeeId: 'TCH403', username: 'teacher_bpharma3', password: 'password', role: 'Teacher', name: 'Prof. Iyer', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
+    { id: 'T_BPHARMA_1', username: 'teacher_bpharma1', password: 'password', role: 'Teacher', name: 'Ms. Chen', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
+    { id: 'T_BPHARMA_2', username: 'teacher_bpharma2', password: 'password', role: 'Teacher', name: 'Dr. Reddy', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
+    { id: 'T_BPHARMA_3', username: 'teacher_bpharma3', password: 'password', role: 'Teacher', name: 'Prof. Iyer', programCoordinatorIds: ['PC_BPHARMA'], status: 'Active' },
     
     // PC for M. Pharma (P4)
-    { id: 'PC_MPHARMA', employeeId: 'PC022', username: 'pc_mpharma', password: 'password', role: 'Program Co-ordinator', name: 'Dr. Verma', programId: 'P4', departmentId: 'DEPT_CCP' },
+    { id: 'PC_MPHARMA', username: 'pc_mpharma', password: 'password', role: 'Program Co-ordinator', name: 'Dr. Verma', programId: 'P4', departmentId: 'DEPT_CCP' },
     // Teachers under Dr. Verma
-    { id: 'T_MPHARMA_1', employeeId: 'TCH501', username: 'teacher_mpharma1', password: 'password', role: 'Teacher', name: 'Mr. Ali', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
-    { id: 'T_MPHARMA_2', employeeId: 'TCH502', username: 'teacher_mpharma2', password: 'password', role: 'Teacher', name: 'Mrs. Khan', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
-    { id: 'T_MPHARMA_3', employeeId: 'TCH503', username: 'teacher_mpharma3', password: 'password', role: 'Teacher', name: 'Dr. Bose', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
+    { id: 'T_MPHARMA_1', username: 'teacher_mpharma1', password: 'password', role: 'Teacher', name: 'Mr. Ali', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
+    { id: 'T_MPHARMA_2', username: 'teacher_mpharma2', password: 'password', role: 'Teacher', name: 'Mrs. Khan', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
+    { id: 'T_MPHARMA_3', username: 'teacher_mpharma3', password: 'password', role: 'Teacher', name: 'Dr. Bose', programCoordinatorIds: ['PC_MPHARMA'], status: 'Active' },
 
     // --- CBS Staff ---
     // PC for BBA (P5)
-    { id: 'PC_BBA', employeeId: 'PC031', username: 'pc_bba', password: 'password', role: 'Program Co-ordinator', name: 'Mr. Carter', programId: 'P5', departmentId: 'DEPT_CBS' },
+    { id: 'PC_BBA', username: 'pc_bba', password: 'password', role: 'Program Co-ordinator', name: 'Mr. Carter', programId: 'P5', departmentId: 'DEPT_CBS' },
     // Teachers under Mr. Carter
-    { id: 'T_BBA_1', employeeId: 'TCH601', username: 'teacher_bba1', password: 'password', role: 'Teacher', name: 'Mrs. Lee', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
-    { id: 'T_BBA_2', employeeId: 'TCH602', username: 'teacher_bba2', password: 'password', role: 'Teacher', name: 'Mr. Scott', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
-    { id: 'T_BBA_3', employeeId: 'TCH603', username: 'teacher_bba3', password: 'password', role: 'Teacher', name: 'Ms. Adams', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
+    { id: 'T_BBA_1', username: 'teacher_bba1', password: 'password', role: 'Teacher', name: 'Mrs. Lee', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
+    { id: 'T_BBA_2', username: 'teacher_bba2', password: 'password', role: 'Teacher', name: 'Mr. Scott', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
+    { id: 'T_BBA_3', username: 'teacher_bba3', password: 'password', role: 'Teacher', name: 'Ms. Adams', programCoordinatorIds: ['PC_BBA'], status: 'Active' },
   ],
   colleges: [
       { id: 'CUIET', name: 'CUIET' },

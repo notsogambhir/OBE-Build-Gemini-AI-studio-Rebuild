@@ -3,7 +3,6 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Student, StudentStatus } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
 import StudentDetailsModal from '../components/StudentDetailsModal';
-import ConfirmationModal from '../components/ConfirmationModal';
 
 const StudentsList: React.FC = () => {
   const { selectedProgram, selectedBatch, data, setData, currentUser, selectedCollegeId } = useAppContext();
@@ -12,12 +11,6 @@ const StudentsList: React.FC = () => {
   const [newStudentName, setNewStudentName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [confirmation, setConfirmation] = useState<{
-        isOpen: boolean;
-        title: string;
-        message: string;
-        onConfirm: () => void;
-    } | null>(null);
 
   const isAdmin = currentUser?.role === 'Admin';
   const isProgramCoordinator = currentUser?.role === 'Program Co-ordinator';
@@ -75,18 +68,10 @@ const StudentsList: React.FC = () => {
   const canAddStudents = canManage && (isProgramCoordinator || (isAdmin && selectedProgram));
 
   const handleStatusChange = (studentId: string, newStatus: StudentStatus) => {
-    setConfirmation({
-        isOpen: true,
-        title: "Confirm Status Change",
-        message: "Are you sure you want to change this student's status?",
-        onConfirm: () => {
-            setData(prev => ({
-                ...prev,
-                students: prev.students.map(s => s.id === studentId ? { ...s, status: newStatus } : s)
-            }));
-            setConfirmation(null);
-        },
-    });
+    setData(prev => ({
+      ...prev,
+      students: prev.students.map(s => s.id === studentId ? { ...s, status: newStatus } : s)
+    }));
   };
 
   const handleAddStudent = (e: React.FormEvent) => {
@@ -217,16 +202,6 @@ const StudentsList: React.FC = () => {
 
       {selectedStudent && (
         <StudentDetailsModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />
-      )}
-      
-      {confirmation && (
-        <ConfirmationModal 
-            isOpen={confirmation.isOpen}
-            title={confirmation.title}
-            message={confirmation.message}
-            onConfirm={confirmation.onConfirm}
-            onClose={() => setConfirmation(null)}
-        />
       )}
     </div>
   );
