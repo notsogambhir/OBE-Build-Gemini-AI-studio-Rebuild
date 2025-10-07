@@ -1,3 +1,6 @@
+// FIX: Add React import to resolve "Cannot find namespace 'React'" error.
+import React from 'react';
+
 const SettingsScreen: React.FC = () => {
   return (
     <div className="space-y-6">

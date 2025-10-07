@@ -30,6 +30,7 @@ const Header: React.FC = () => {
                     <div className="text-right">
                         <p className="font-semibold text-gray-700">{currentUser?.name}</p>
                         <p className="text-sm text-gray-500">{currentUser?.role}</p>
+                        <p className="text-xs text-gray-400">{currentUser?.employeeId}</p>
                     </div>
                     { currentUser?.role !== 'Department' && (
                         <button 

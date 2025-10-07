@@ -1,3 +1,6 @@
+// FIX: Add React import to resolve "Cannot find namespace 'React'" error.
+import React from 'react';
+
 const AttainmentReports: React.FC = () => {
     return (
         <div className="text-center p-8 bg-white rounded-lg shadow-md">

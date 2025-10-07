@@ -18,7 +18,8 @@ const AdminUserManagementTab: React.FC = () => {
     return data.users.filter(u =>
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.role.toLowerCase().includes(searchTerm.toLowerCase())
+      u.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data.users, searchTerm]);
 
@@ -70,7 +71,7 @@ const AdminUserManagementTab: React.FC = () => {
         <div className="flex justify-between items-center">
              <input
                 type="text"
-                placeholder="Search users..."
+                placeholder="Search by name, username, role, or ID..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-full max-w-sm p-2 border border-gray-300 rounded-md"
@@ -96,6 +97,7 @@ const AdminUserManagementTab: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="font-medium text-gray-900">{user.name}</div>
                                 <div className="text-sm text-gray-500">{user.username}</div>
+                                <div className="text-xs text-gray-400">{user.employeeId}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getAssignmentInfo(user)}</td>

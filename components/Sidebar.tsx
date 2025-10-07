@@ -88,7 +88,7 @@ const Sidebar: React.FC = () => {
   const menuItems = allMenuItems.filter(item => currentUser && item.roles.includes(currentUser.role));
 
   return (
-    <aside className="w-64 bg-white shadow-md flex flex-col hidden sm:flex h-screen">
+    <aside className="w-64 bg-white shadow-md flex flex-col hidden sm:flex h-full">
         <div className="flex items-center justify-center p-6 border-b flex-shrink-0">
            <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Chitkara University Logo" className="h-10" />
         </div>

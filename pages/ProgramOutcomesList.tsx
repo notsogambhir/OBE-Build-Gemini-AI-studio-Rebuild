@@ -6,14 +6,20 @@ import POAttainmentDashboard from '../components/POAttainmentDashboard';
 import { Trash2 } from '../components/Icons';
 import AddProgramOutcomeModal from '../components/AddProgramOutcomeModal';
 import SaveBar from '../components/SaveBar';
+import CoursePoLinkageDashboard from '../components/CoursePoLinkageDashboard';
 
 const ProgramOutcomesList: React.FC = () => {
   const { selectedProgram, data, setData } = useAppContext();
   const [isModalOpen, setModalOpen] = useState(false);
   
-  const programOutcomes = useMemo(() =>
-    data.programOutcomes.filter(po => po.programId === selectedProgram?.id)
-  , [data.programOutcomes, selectedProgram?.id]);
+  const { programOutcomes, coursesForProgram } = useMemo(() => {
+    const outcomes = data.programOutcomes.filter(po => po.programId === selectedProgram?.id);
+    const courses = data.courses.filter(c => c.programId === selectedProgram?.id && c.status !== 'Future');
+    return {
+        programOutcomes: outcomes,
+        coursesForProgram: courses
+    };
+  }, [data.programOutcomes, data.courses, selectedProgram?.id]);
 
   // State management for the dashboard
   const [originalState, setOriginalState] = useState({ weights: { direct: 90, indirect: 10 }, indirectAttainment: {} as {[poId: string]: string} });
@@ -105,6 +111,11 @@ const ProgramOutcomesList: React.FC = () => {
         programOutcomes={programOutcomes}
         draftState={draftState}
         onStateChange={setDraftState}
+      />
+
+      <CoursePoLinkageDashboard 
+        programOutcomes={programOutcomes}
+        courses={coursesForProgram}
       />
       
       {isModalOpen && (

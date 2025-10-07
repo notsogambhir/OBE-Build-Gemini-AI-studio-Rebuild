@@ -7,27 +7,78 @@ const StudentCOAttainmentReport: React.FC = () => {
     const { data } = useAppContext();
 
     const course = useMemo(() => data.courses.find(c => c.id === courseId), [courseId, data.courses]);
-    const courseOutcomes = useMemo(() => data.courseOutcomes.filter(co => co.courseId === courseId), [courseId, data.courseOutcomes]);
+    const courseOutcomes = useMemo(() => data.courseOutcomes.filter(co => co.courseId === courseId).sort((a, b) => a.number.localeCompare(b.number)), [courseId, data.courseOutcomes]);
 
     const studentAttainmentData = useMemo(() => {
-        if (!courseId) return [];
-        
+        if (!courseId || !courseOutcomes || courseOutcomes.length === 0) return [];
+
+        // Get all data related to the course first
+        const assessmentsForCourse = data.assessments.filter(a => a.courseId === courseId);
         const enrolledStudentIds = new Set(data.enrollments.filter(e => e.courseId === courseId).map(e => e.studentId));
         const studentsInCourse = data.students.filter(s => enrolledStudentIds.has(s.id));
+        
+        // Create a map for faster mark lookups: studentId -> assessmentId -> {scoreMap}
+        const studentMarksMap = new Map<string, Map<string, Map<string, number>>>();
+        data.marks
+            .filter(m => enrolledStudentIds.has(m.studentId))
+            .forEach(mark => {
+                if (!studentMarksMap.has(mark.studentId)) {
+                    studentMarksMap.set(mark.studentId, new Map());
+                }
+                const assessmentMap = studentMarksMap.get(mark.studentId)!;
+                const scoreMap = new Map<string, number>();
+                mark.scores.forEach(s => scoreMap.set(s.q, s.marks));
+                assessmentMap.set(mark.assessmentId, scoreMap);
+            });
+            
+        // Create a map for faster CO question lookups: coId -> { qName, maxMarks, assessmentId }[]
+        const coQuestionMap = new Map<string, { q: string; maxMarks: number; assessmentId: string }[]>();
+        courseOutcomes.forEach(co => coQuestionMap.set(co.id, []));
+
+        assessmentsForCourse.forEach(assessment => {
+            assessment.questions.forEach(q => {
+                q.coIds.forEach(coId => {
+                    if (coQuestionMap.has(coId)) {
+                        coQuestionMap.get(coId)!.push({ q: q.q, maxMarks: q.maxMarks, assessmentId: assessment.id });
+                    }
+                });
+            });
+        });
 
         return studentsInCourse.map(student => {
             const attainments: { [coId: string]: number } = {};
+
             courseOutcomes.forEach(co => {
-                // This logic is still mocked, but now it only applies to enrolled students.
-                // A real implementation would calculate this based on marks.
-                attainments[co.id] = Math.floor(Math.random() * (100 - 40 + 1) + 40);
+                const questionsForCo = coQuestionMap.get(co.id) || [];
+                if (questionsForCo.length === 0) {
+                    attainments[co.id] = 0;
+                    return;
+                }
+
+                const totalMaxMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
+                let totalObtainedMarks = 0;
+                
+                const studentAssessmentMarks = studentMarksMap.get(student.id);
+
+                if (studentAssessmentMarks) {
+                    totalObtainedMarks = questionsForCo.reduce((sum, q) => {
+                        const score = studentAssessmentMarks.get(q.assessmentId)?.get(q.q);
+                        return sum + (score || 0);
+                    }, 0);
+                }
+                
+                attainments[co.id] = totalMaxMarks > 0 ? (totalObtainedMarks / totalMaxMarks) * 100 : 0;
             });
-            return {
-                student,
-                attainments,
-            };
-        });
-    }, [courseId, data.enrollments, data.students, courseOutcomes]);
+
+            const coAttainmentValues = Object.values(attainments);
+            const overallAttainment = coAttainmentValues.length > 0 
+                ? coAttainmentValues.reduce((sum, val) => sum + val, 0) / coAttainmentValues.length 
+                : 0;
+
+            return { student, attainments, overallAttainment };
+        }).sort((a,b) => a.student.id.localeCompare(b.student.id));
+
+    }, [courseId, data, courseOutcomes]);
 
     if (!course) {
         return <div className="text-center text-red-500">Course not found.</div>;
@@ -46,24 +97,37 @@ const StudentCOAttainmentReport: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                                 {courseOutcomes.map(co => (
-                                    <th key={co.id} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{co.number} Attainment %</th>
+                                    <th key={co.id} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title={co.description}>{co.number} Attainment %</th>
                                 ))}
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Attainment %</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {studentAttainmentData.map(({ student, attainments }) => (
+                            {studentAttainmentData.map(({ student, attainments, overallAttainment }) => (
                                 <tr key={student.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.id}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{student.name}</td>
                                     {courseOutcomes.map(co => (
                                         <td key={co.id} className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                             <span className={`font-semibold ${attainments[co.id] >= course.target ? 'text-green-600' : 'text-red-600'}`}>
-                                                {attainments[co.id]}%
+                                                {attainments[co.id].toFixed(0)}%
                                             </span>
                                         </td>
                                     ))}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                        <span className={`font-bold px-2 py-1 rounded-md ${overallAttainment >= course.target ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {overallAttainment.toFixed(0)}%
+                                        </span>
+                                    </td>
                                 </tr>
                             ))}
+                            {studentAttainmentData.length === 0 && (
+                                <tr>
+                                    <td colSpan={courseOutcomes.length + 3} className="text-center py-8 text-gray-500">
+                                        No student data available to generate the report.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

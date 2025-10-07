@@ -54,7 +54,7 @@ const TeacherDetails: React.FC = () => {
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h1 className="text-3xl font-bold text-gray-800">{teacher.name}'s Dashboard</h1>
-                <p className="text-gray-500">Overview of assigned courses and their status.</p>
+                <p className="text-gray-500">Employee ID: {teacher.employeeId} | Overview of assigned courses and their status.</p>
             </div>
             
             {assignedCoursesData.map(course => (

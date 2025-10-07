@@ -19,7 +19,7 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({ student, onCl
       const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === course.id);
 
       if (course.status === 'Future') {
-        return { course, coAttainments: null };
+        return { course, coAttainments: null, overallAttainment: null };
       }
 
       const coAttainments = courseOutcomes.map(co => {
@@ -47,11 +47,16 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({ student, onCl
         
         return {
           coNumber: co.number,
-          percentage: percentage.toFixed(2),
+          percentage: percentage,
         };
       });
 
-      return { course, coAttainments };
+      const overallAttainment = coAttainments.length > 0
+        ? coAttainments.reduce((sum, att) => sum + att.percentage, 0) / coAttainments.length
+        : 0;
+
+
+      return { course, coAttainments, overallAttainment };
     });
   }, [student, data]);
 
@@ -66,20 +71,28 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({ student, onCl
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           <h4 className="font-semibold text-gray-700">Enrolled Courses</h4>
           {studentCourseData.length > 0 ? (
-            studentCourseData.map(({ course, coAttainments }) => (
+            studentCourseData.map(({ course, coAttainments, overallAttainment }) => (
               <div key={course.id} className="bg-gray-50 p-4 rounded-lg border">
                 <p className="font-bold text-gray-800">{course.name} ({course.code})</p>
                 
-                {coAttainments ? (
-                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
-                    {coAttainments.map(attainment => (
-                      <div key={attainment.coNumber}>
-                        <span className="font-semibold">{attainment.coNumber}:</span>
-                        <span className="ml-2 text-gray-600">{attainment.percentage}%</span>
-                      </div>
-                    ))}
-                    {coAttainments.length === 0 && <p className="text-gray-500 col-span-full">No COs defined for this course.</p>}
-                  </div>
+                {coAttainments && overallAttainment !== null ? (
+                  <>
+                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
+                        {coAttainments.map(attainment => (
+                        <div key={attainment.coNumber}>
+                            <span className="font-semibold">{attainment.coNumber}:</span>
+                            <span className="ml-2 text-gray-600">{attainment.percentage.toFixed(2)}%</span>
+                        </div>
+                        ))}
+                        {coAttainments.length === 0 && <p className="text-gray-500 col-span-full">No COs defined for this course.</p>}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                        <span className="font-semibold text-gray-800">Overall Course Attainment:</span>
+                         <span className={`ml-2 font-bold px-2 py-1 rounded-md text-sm ${overallAttainment >= course.target ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {overallAttainment.toFixed(2)}%
+                        </span>
+                    </div>
+                  </>
                 ) : (
                   <p className="mt-2 text-sm text-gray-500 italic">(Future Course - No attainment data)</p>
                 )}
