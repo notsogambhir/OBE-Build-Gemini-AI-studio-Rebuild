@@ -19,7 +19,9 @@ const CoursePoLinkageDashboard: React.FC<CoursePoLinkageDashboardProps> = ({ pro
             // --- Calculate Overall CO Attainment ---
             let overallCoAttainment = 0;
             if (studentsInCourse.length > 0 && courseOutcomes.length > 0) {
-                const assessmentsForCourse = data.assessments.filter(a => a.courseId === course.id);
+                // FIX: Assessments are linked via sections, not directly to courses. This logic finds all assessments for a course via its sections from enrollments.
+                const sectionIdsForCourse = new Set(data.enrollments.filter(e => e.courseId === course.id && e.sectionId).map(e => e.sectionId!));
+                const assessmentsForCourse = data.assessments.filter(a => sectionIdsForCourse.has(a.sectionId));
 
                 // Pre-compute maps for performance
                 const coQuestionMap = new Map<string, { q: string; maxMarks: number; assessmentId: string }[]>();

@@ -114,7 +114,7 @@ export interface AssessmentQuestion {
 
 export interface Assessment {
   id: string;
-  courseId: string;
+  sectionId: string;
   name: string;
   type: 'Internal' | 'External';
   questions: AssessmentQuestion[];

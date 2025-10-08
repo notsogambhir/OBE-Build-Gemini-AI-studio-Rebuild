@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Assessment, AssessmentQuestion, Mark, MarkScore, Student } from '../types';
+import { Assessment, AssessmentQuestion, Mark, MarkScore, Course } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import ExcelUploader from './ExcelUploader';
 import { PlusCircle, Trash2, Download, ChevronUp, Edit } from './Icons';
@@ -11,9 +11,10 @@ declare const XLSX: any;
 interface AssessmentDetailsProps {
   assessmentId: string;
   onBack: () => void;
+  course: Course;
 }
 
-const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onBack }) => {
+const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onBack, course }) => {
     const { data, setData, currentUser } = useAppContext();
     const canManage = currentUser?.role === 'Teacher' || currentUser?.role === 'Program Co-ordinator';
     
@@ -25,11 +26,6 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
     } | null>(null);
 
     const assessment = useMemo(() => data.assessments.find(a => a.id === assessmentId), [data.assessments, assessmentId]);
-    const course = useMemo(() => {
-      if (!assessment) return null;
-      return data.courses.find(c => c.id === assessment.courseId);
-    }, [assessment, data.courses]);
-
 
     const [draftQuestions, setDraftQuestions] = useState<AssessmentQuestion[]>([]);
     const [initialQuestions, setInitialQuestions] = useState<AssessmentQuestion[]>([]);
@@ -72,40 +68,18 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
         );
     }
     
-    const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === assessment.courseId);
+    const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === course.id);
 
     const handleDownloadTemplate = () => {
-        const allEnrolledStudents = data.enrollments.filter(e => e.courseId === assessment.courseId);
-        
-        let studentIdsForTemplate: Set<string>;
-
-        if (currentUser?.role === 'Teacher') {
-            const mySectionIds = Object.entries(course.sectionTeacherIds || {})
-                .filter(([, teacherId]) => teacherId === currentUser.id)
-                .map(([sectionId]) => sectionId);
-
-            if (mySectionIds.length > 0) {
-                // Teacher is assigned to specific sections. Get students from ONLY those sections.
-                studentIdsForTemplate = new Set(
-                    allEnrolledStudents
-                        .filter(e => e.sectionId && mySectionIds.includes(e.sectionId))
-                        .map(e => e.studentId)
-                );
-            } else if (course.teacherId === currentUser.id) {
-                // Teacher is the main teacher for the course (and has no specific section assignments for this course).
-                studentIdsForTemplate = new Set(allEnrolledStudents.map(e => e.studentId));
-            } else {
-                // Teacher is not assigned to this course at all. Should get an empty template.
-                studentIdsForTemplate = new Set();
-            }
-        } else {
-            // Non-teachers (PC, Admin, etc.) get all students.
-            studentIdsForTemplate = new Set(allEnrolledStudents.map(e => e.studentId));
-        }
+        const studentIdsForSection = new Set(
+            data.enrollments
+                .filter(e => e.sectionId === assessment.sectionId)
+                .map(e => e.studentId)
+        );
 
         const activeEnrolledStudents = data.students
-            .filter(s => s.status === 'Active' && studentIdsForTemplate.has(s.id))
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .filter(s => s.status === 'Active' && studentIdsForSection.has(s.id))
+            .sort((a, b) => a.id.localeCompare(b.id));
 
         const questionHeaders = draftQuestions.map(q => q.q).sort((a, b) => parseInt(a.substring(1)) - parseInt(b.substring(1)));
 
@@ -119,11 +93,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
             const headerRow: { [key: string]: string } = { 'Student ID': '', 'Student Name': '' };
             questionHeaders.forEach(header => { headerRow[header] = ''; });
             templateData.push(headerRow);
-            if(currentUser?.role === 'Teacher') {
-                 alert("You are not assigned to any students in this course. An empty template with only headers will be downloaded.");
-            } else {
-                 alert("No active students are enrolled. A template with only headers will be downloaded.");
-            }
+            alert("No active students found in this section. A template with only headers will be downloaded.");
         }
 
         try {
@@ -158,15 +128,16 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
     };
 
     const handleMarksUpload = (uploadedData: any[]) => {
+      const studentIdsInSection = new Set(data.enrollments.filter(e => e.sectionId === assessment.sectionId).map(e => e.studentId));
+
       setData(prev => {
           let updatedMarks = [...prev.marks];
-          const studentIdsInProgram = new Set(prev.students.filter(s => s.programId === assessment.courseId).map(s => s.id));
 
           uploadedData.forEach(row => {
               const studentIdKey = Object.keys(row).find(key => key.toLowerCase().includes('id'));
               if (!studentIdKey) return;
               const studentId = String(row[studentIdKey]);
-              if (!studentId || !studentIdsInProgram.has(studentId)) return;
+              if (!studentId || !studentIdsInSection.has(studentId)) return;
 
               let markEntryIndex = updatedMarks.findIndex(m => m.studentId === studentId && m.assessmentId === assessment.id);
               let studentMarkEntry: Mark;
@@ -281,7 +252,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessmentId, onB
                 <h2 className="text-2xl font-bold text-gray-800">Manage: {assessment.name}</h2>
                 <button onClick={onBack} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold">
                     <ChevronUp className="w-5 h-5 mr-2" />
-                    Hide Questions
+                    Back to List
                 </button>
             </div>
             

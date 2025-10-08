@@ -4,11 +4,11 @@ import Modal from './Modal';
 import { Assessment } from '../types';
 
 interface CreateAssessmentModalProps {
-  courseId: string;
+  sectionId: string;
   onClose: () => void;
 }
 
-const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({ courseId, onClose }) => {
+const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({ sectionId, onClose }) => {
   const { setData } = useAppContext();
   const [name, setName] = useState('');
   const [type, setType] = useState<'Internal' | 'External'>('Internal');
@@ -21,7 +21,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({ courseId,
     }
     const newAssessment: Assessment = {
       id: `as_${Date.now()}`,
-      courseId,
+      sectionId,
       name: name.trim(),
       type,
       questions: []

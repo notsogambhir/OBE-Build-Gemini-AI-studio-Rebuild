@@ -13,7 +13,9 @@ const StudentCOAttainmentReport: React.FC = () => {
         if (!courseId || !courseOutcomes || courseOutcomes.length === 0) return [];
 
         // Get all data related to the course first
-        const assessmentsForCourse = data.assessments.filter(a => a.courseId === courseId);
+        // FIX: Assessments are linked to sections, not directly to courses. This logic finds all assessments for a course via its sections from enrollments.
+        const sectionIdsForCourse = new Set(data.enrollments.filter(e => e.courseId === courseId && e.sectionId).map(e => e.sectionId!));
+        const assessmentsForCourse = data.assessments.filter(a => sectionIdsForCourse.has(a.sectionId));
         const enrolledStudentIds = new Set(data.enrollments.filter(e => e.courseId === courseId).map(e => e.studentId));
         const studentsInCourse = data.students.filter(s => enrolledStudentIds.has(s.id));
         

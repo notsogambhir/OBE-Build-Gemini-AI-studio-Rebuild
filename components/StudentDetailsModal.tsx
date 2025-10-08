@@ -26,7 +26,9 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({ student, onCl
         let obtainedMarks = 0;
         let possibleMarks = 0;
 
-        const assessmentsForCourse = data.assessments.filter(a => a.courseId === course.id);
+        // FIX: Assessments are linked via sections, not directly to courses. This logic finds all assessments for a course via its sections from enrollments.
+        const sectionIdsForCourse = new Set(data.enrollments.filter(e => e.courseId === course.id && e.sectionId).map(e => e.sectionId!));
+        const assessmentsForCourse = data.assessments.filter(a => sectionIdsForCourse.has(a.sectionId));
 
         assessmentsForCourse.forEach(assessment => {
           const questionsForCo = assessment.questions.filter(q => q.coIds.includes(co.id));

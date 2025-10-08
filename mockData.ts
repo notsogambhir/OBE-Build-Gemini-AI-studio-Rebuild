@@ -142,15 +142,13 @@ export const initialData: AppData = {
     { courseId: 'C201', coId: 'CO_C201_2', poId: 'PO_P2_3', level: 3 },
   ],
   assessments: [
-    // Assessments for C102 (DBMS)
-    { id: 'A_C102_1', courseId: 'C102', name: 'Sessional Test 1', type: 'Internal', questions: [
+    { id: 'A_C102_1', sectionId: 'SEC_A_P2_2025', name: 'Sessional Test 1', type: 'Internal', questions: [
       { q: 'Q1', coIds: ['CO_C102_1'], maxMarks: 10 }, { q: 'Q2', coIds: ['CO_C102_2'], maxMarks: 15 },
     ]},
-    { id: 'A_C102_2', courseId: 'C102', name: 'Final Exam', type: 'External', questions: [
+    { id: 'A_C102_2', sectionId: 'SEC_B_P2_2025', name: 'Final Exam', type: 'External', questions: [
       { q: 'Q1', coIds: ['CO_C102_1', 'CO_C102_2'], maxMarks: 20 }, { q: 'Q2', coIds: ['CO_C102_3'], maxMarks: 25 },
     ]},
-     // Assessments for C201 (Digital Logic)
-    { id: 'A_C201_1', courseId: 'C201', name: 'Sessional Test 1', type: 'Internal', questions: [
+    { id: 'A_C201_1', sectionId: 'SEC_A_P2_2025', name: 'Sessional Test 1', type: 'Internal', questions: [
       { q: 'Q1', coIds: ['CO_C201_1'], maxMarks: 10 }, { q: 'Q2', coIds: ['CO_C201_2'], maxMarks: 10 },
     ]},
   ],

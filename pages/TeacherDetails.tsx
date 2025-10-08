@@ -31,8 +31,10 @@ const TeacherDetails: React.FC = () => {
 
             const overallCoAttainment = totalStudents > 0 ? (studentsMeetingTargetCount / totalStudents) * 100 : 0;
             
+            // FIX: Assessments are linked via sections, not directly to courses. This logic finds all assessments for a course via its sections from enrollments.
+            const sectionIdsForCourse = new Set(data.enrollments.filter(e => e.courseId === course.id && e.sectionId).map(e => e.sectionId!));
             const assessments = data.assessments
-                .filter(a => a.courseId === course.id)
+                .filter(a => sectionIdsForCourse.has(a.sectionId))
                 .map(assessment => ({
                     ...assessment,
                     hasMarks: data.marks.some(m => m.assessmentId === assessment.id)
