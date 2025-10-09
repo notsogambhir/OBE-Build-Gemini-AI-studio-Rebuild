@@ -2,6 +2,19 @@
 
 This document tracks all significant changes made to the NBA Outcome Based Education Portal application.
 
+## [Unreleased] - 2024-07-27
+
+### Mock Data and Documentation Update
+- **Fixed**: Populated `mockData.json` with generated students, enrollments, and marks data. This resolves issues where student lists, CO attainment reports, and other data-dependent components were appearing empty.
+- **Docs**: Updated `backend_guide.md` with a more detailed section on defining database schemas using Django models and a clearer explanation of the data migration process.
+
+## [Unreleased] - 2024-07-26
+
+### Data Loading Refactor
+- Converted static `mockData.ts` to `mockData.json`.
+- Updated `AppContext` to fetch data asynchronously, showing a loading screen on initial startup.
+- Removed client-side generation logic for students, enrollments, and marks, as the `mockData.json` file is now complete. This simplifies the data loading process and ensures consistency.
+
 ## [Unreleased] - 2024-07-25
 
 ### Major Refactoring: Assessments moved from Course-level to Section-level

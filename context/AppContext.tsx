@@ -1,6 +1,5 @@
-import React, { createContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useState, useCallback, useMemo, ReactNode, useEffect } from 'react';
 import { User, Program, College, AppData } from '../types';
-import { initialData } from '../mockData';
 
 interface AppContextType {
   data: AppData;
@@ -9,7 +8,6 @@ interface AppContextType {
   selectedLoginCollege: College | null;
   selectedProgram: Program | null;
   selectedBatch: string | null;
-  // FIX: Add selectedCollegeId to context to be globally accessible for high-level users (Admin/University).
   selectedCollegeId: string | null;
   setSelectedCollegeId: React.Dispatch<React.SetStateAction<string | null>>;
   login: (username: string, password: string, college: College) => boolean;
@@ -20,13 +18,12 @@ interface AppContextType {
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const LoadedAppProvider: React.FC<{ children: ReactNode, initialData: AppData }> = ({ children, initialData }) => {
   const [data, setData] = useState<AppData>(initialData);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedLoginCollege, setSelectedLoginCollege] = useState<College | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
-  // FIX: Add state for selectedCollegeId to make it available throughout the app.
   const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null);
 
   const login = useCallback((username: string, password: string, college: College) => {
@@ -53,14 +50,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setSelectedLoginCollege(null);
     setSelectedProgram(null);
     setSelectedBatch(null);
-    // FIX: Clear selectedCollegeId on logout.
     setSelectedCollegeId(null);
   }, []);
 
   const setProgramAndBatch = useCallback((program: Program, batch: string) => {
     setSelectedProgram(program);
     setSelectedBatch(batch);
-    // FIX: Keep selectedCollegeId in sync when a program is selected.
     setSelectedCollegeId(program.collegeId);
   }, []);
 
@@ -81,7 +76,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       selectedBatch,
       setProgramAndBatch,
       goBackToProgramSelection,
-      // FIX: Expose selectedCollegeId and its setter through the context.
       selectedCollegeId,
       setSelectedCollegeId,
     }),
@@ -100,4 +94,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
+
+
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [initialData, setInitialData] = useState<AppData | null>(null);
+
+  useEffect(() => {
+    fetch('./mockData.json')
+      .then(res => res.json())
+      .then(jsonData => {
+        setInitialData(jsonData);
+      })
+      .catch(error => console.error("Failed to load mock data:", error));
+  }, []);
+
+  if (!initialData) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+          <div className="text-center">
+              <img src="https://d1hbpr09pwz0sk.cloudfront.net/logo_url/chitkara-university-4c35e411" alt="Logo" className="h-20 mx-auto mb-4 animate-pulse" />
+              <p className="text-xl font-semibold text-gray-700">Loading Portal...</p>
+          </div>
+      </div>
+    );
+  }
+
+  return <LoadedAppProvider initialData={initialData}>{children}</LoadedAppProvider>;
 };

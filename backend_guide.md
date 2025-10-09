@@ -1,9 +1,10 @@
 
+
 # Backend Development Guide: NBA OBE Portal (Django REST Framework)
 
 This document provides a comprehensive, step-by-step guide for building the backend server for the NBA OBE Portal frontend. The recommended stack is **Django**, **Django REST Framework (DRF)**, and **PostgreSQL**.
 
-The primary goal is to replace the `mockData.ts` file and all client-side `setData` calls with live API requests to this backend.
+The primary goal is to replace the `mockData.json` file and all client-side `setData` calls with live API requests to this backend.
 
 ---
 
@@ -107,62 +108,90 @@ CORS_ALLOWED_ORIGINS = [
 
 ## 3. Step 2: Models & Migrations
 
-Translate the interfaces in `types.ts` into Django models in `api/models.py`. Django's ORM is powerful for defining relationships.
+### Step 2a: Detailed Model Definitions (Database Schema)
+
+Translate the interfaces in `types.ts` into Django models in `api/models.py`. The Django ORM uses these model definitions to generate and manage your PostgreSQL database schema. Use `ForeignKey` for one-to-many relationships and `JSONField` for flexible data structures.
 
 **`api/models.py` (Example):**
 
 ```python
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.db.models import JSONField # For newer Django versions
 
-# Using a proxy model for roles is cleaner than extending AbstractUser if you don't need separate tables
+# It's good practice to define choices for enum-like fields
+class UserRole(models.TextChoices):
+    TEACHER = 'Teacher'
+    COORDINATOR = 'Program Co-ordinator'
+    UNIVERSITY = 'University'
+    ADMIN = 'Admin'
+    DEPARTMENT = 'Department'
+
 class User(models.Model):
-    # Enums for choices
-    class Role(models.TextChoices):
-        TEACHER = 'Teacher', 'Teacher'
-        PC = 'Program Co-ordinator', 'Program Co-ordinator'
-        UNIVERSITY = 'University', 'University'
-        ADMIN = 'Admin', 'Admin'
-        DEPARTMENT = 'Department', 'Department'
-        
     id = models.CharField(max_length=50, primary_key=True)
     employeeId = models.CharField(max_length=50, unique=True)
     username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=128) # Store hashed passwords!
-    role = models.CharField(max_length=50, choices=Role.choices)
+    password = models.CharField(max_length=128) # IMPORTANT: Store hashed passwords!
+    role = models.CharField(max_length=50, choices=UserRole.choices)
     name = models.CharField(max_length=255)
     status = models.CharField(max_length=20, default='Active')
-
-    # Relationships
-    programId = models.CharField(max_length=50, null=True, blank=True)
-    programCoordinatorIds = ArrayField(models.CharField(max_length=50), blank=True, null=True)
-    collegeId = models.CharField(max_length=50, null=True, blank=True)
-    departmentId = models.CharField(max_length=50, null=True, blank=True)
-
+    
+    # Relationships will be defined via other models' ForeignKeys
+    # or through explicit fields if needed.
+    
     def __str__(self):
         return self.name
 
 class Program(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=255)
-    collegeId = models.CharField(max_length=50)
+    collegeId = models.CharField(max_length=50) # Assuming college is a simple char field for now
 
-# ... continue defining models for Course, Student, Assessment, Mark, etc.
-# Use ForeignKey for one-to-many relationships (e.g., Course to Program)
-# Use ManyToManyField for many-to-many relationships if needed.
-# Use JSONField for flexible data structures like `attainmentLevels` or `questions`.
+class Course(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=20)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='courses')
+    target = models.IntegerField(default=50)
+    internalWeightage = models.IntegerField(default=25)
+    externalWeightage = models.IntegerField(default=75)
+    attainmentLevels = JSONField() # e.g., {"level3": 80, "level2": 70, "level1": 50}
+    status = models.CharField(max_length=20, default='Future')
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
+
+# ... continue defining models for Student, Assessment, Mark, etc.
+# Here's an example for Assessment:
+
+class Assessment(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    # sectionId from mock data implies a Section model
+    # section = models.ForeignKey('Section', on_delete=models.CASCADE, related_name='assessments')
+    sectionId = models.CharField(max_length=50)
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=20) # 'Internal' or 'External'
+    questions = JSONField() # Stores the list of question objects
 ```
 
-After defining all your models, run the migrations:
+### Step 2b: Understanding Migrations
 
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
+Django's migration system is how you manage your database schema over time without writing SQL manually.
+
+1.  **Generate Migrations**: After defining or changing your models in `api/models.py`, run this command:
+    ```bash
+    python manage.py makemigrations
+    ```
+    Django inspects your models and compares them to the current state of your database schema (tracked by previous migration files). It then generates a new migration file in the `api/migrations/` directory. This file is Python code that describes the changes needed (e.g., create table, add column, alter column type).
+
+2.  **Apply Migrations**: To apply the pending migrations to your database, run:
+    ```bash
+    python manage.py migrate
+    ```
+    Django will connect to your PostgreSQL database, read the unapplied migration files, and execute the necessary SQL commands to update the schema.
+
+This two-step process allows you to version-control your database schema alongside your code.
 
 ## 4. Step 3: Seeding Initial Data
 
-To populate your database for development, create a custom management command.
+To populate your database for development, create a custom management command. This command will read from the `mockData.json` file.
 
 **`api/management/commands/seed_data.py`**:
 
@@ -172,13 +201,13 @@ from django.core.management.base import BaseCommand
 from api.models import User, Program, Course # Import all your models
 
 class Command(BaseCommand):
-    help = 'Seeds the database with initial data from mockData.ts'
+    help = 'Seeds the database with initial data from mockData.json'
 
     def handle(self, *args, **options):
-        # 1. Manually copy the JSON content from `mockData.ts` into a file like `seed.json`.
-        # 2. Remove the JavaScript syntax to make it pure JSON.
+        # The command assumes `mockData.json` is in the root of your Django project.
+        # The file is already in pure JSON format.
         
-        with open('seed.json', 'r') as f:
+        with open('mockData.json', 'r') as f:
             data = json.load(f)
 
         self.stdout.write("Seeding data...")
@@ -385,7 +414,6 @@ This is where the frontend is modified to talk to the new backend.
     ```
 
 2.  **Refactor `AppContext.tsx`**:
-    *   Remove `import { initialData } ...`.
     *   Modify the `login` function to call the API.
     *   Fetch all necessary data after login.
 

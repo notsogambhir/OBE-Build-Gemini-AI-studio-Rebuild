@@ -7,9 +7,10 @@ import CoPoMappingMatrix from '../components/CoPoMappingMatrix';
 import CourseOverviewTab from '../components/CourseOverviewTab';
 import StudentCOAttainmentReport from './StudentCOAttainmentReport';
 import CourseFacultyAssignment from '../components/CourseFacultyAssignment';
+import CourseCoAttainment from '../components/CourseCoAttainment';
 import { Course } from '../types';
 
-type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'Student Reports' | 'Faculty Assignment';
+type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'CO Attainments' | 'Student Reports' | 'Faculty Assignment';
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -18,7 +19,7 @@ const CourseDetail: React.FC = () => {
 
   const course = useMemo(() => data.courses.find(c => c.id === courseId), [courseId, data.courses]);
   
-  if (currentUser?.role === 'Teacher' && course && course.teacherId !== currentUser.id) {
+  if (currentUser?.role === 'Teacher' && course && course.teacherId !== currentUser.id && (!course.sectionTeacherIds || !Object.values(course.sectionTeacherIds).includes(currentUser.id))) {
     return (
         <div className="text-center p-8 bg-white rounded-lg shadow-md">
             <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
@@ -32,10 +33,11 @@ const CourseDetail: React.FC = () => {
   }
 
   const isCoordinator = currentUser?.role === 'Program Co-ordinator';
+  const isAdmin = currentUser?.role === 'Admin';
 
-  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping'];
+  const tabs: Tab[] = ['Overview', 'COs', 'Assessments', 'CO-PO Mapping', 'CO Attainments'];
 
-  if (isCoordinator) {
+  if (isCoordinator || isAdmin) {
     tabs.push('Faculty Assignment');
   }
   
@@ -52,8 +54,10 @@ const CourseDetail: React.FC = () => {
         return <ManageCourseAssessments course={course} />;
       case 'CO-PO Mapping':
         return <CoPoMappingMatrix />;
+      case 'CO Attainments':
+        return <CourseCoAttainment course={course} />;
       case 'Faculty Assignment':
-        return isCoordinator ? <CourseFacultyAssignment course={course} /> : null;
+        return (isCoordinator || isAdmin) ? <CourseFacultyAssignment course={course} /> : null;
       case 'Student Reports':
         return <StudentCOAttainmentReport />;
       default:
@@ -71,7 +75,7 @@ const CourseDetail: React.FC = () => {
       </div>
 
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           {tabs.map(tab => (
             <button
               key={tab}
