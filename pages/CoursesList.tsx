@@ -100,7 +100,7 @@ const CoursesList: React.FC = () => {
             teachersForPC,
             pageTitle: title
         };
-    }, [data.courses, data.users, data.programs, data.colleges, selectedProgram, currentUser, selectedCollegeId, isProgramCoordinator, isAdmin]);
+    }, [data, selectedProgram, currentUser, selectedCollegeId, isProgramCoordinator, isAdmin]);
     
     const canAddCourse = canManageCourses && (isProgramCoordinator || (isAdmin && selectedProgram));
 
@@ -135,24 +135,27 @@ const CoursesList: React.FC = () => {
             const updatedCourses = prev.courses.map(c => {
                 if (ids.includes(c.id)) {
                     if (newStatus === 'Active' && c.status !== 'Active') {
-                         if (selectedProgram && selectedBatch) {
-                            const sectionsForBatch = prev.sections.filter(s => s.programId === selectedProgram.id && s.batch === selectedBatch);
-                            const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
-                    
-                            const activeStudentsForBatch = prev.students.filter(s => 
-                                s.programId === selectedProgram.id && 
-                                s.status === 'Active' &&
-                                s.sectionId &&
-                                sectionIdsForBatch.has(s.sectionId)
-                            );
-                    
-                            const existingEnrollments = new Set(newEnrollments.filter(e => e.courseId === c.id).map(e => e.studentId));
-                            
-                            const enrollmentsToAdd = activeStudentsForBatch
-                                .filter(s => !existingEnrollments.has(s.id))
-                                .map(s => ({ courseId: c.id, studentId: s.id, sectionId: s.sectionId }));
+                        if (selectedProgram && selectedBatch) {
+                            const batch = prev.batches.find(b => b.programId === selectedProgram.id && b.name === selectedBatch);
+                            if (batch) {
+                                const sectionsForBatch = prev.sections.filter(s => s.batchId === batch.id);
+                                const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
+                        
+                                const activeStudentsForBatch = prev.students.filter(s => 
+                                    s.programId === selectedProgram.id && 
+                                    s.status === 'Active' &&
+                                    s.sectionId &&
+                                    sectionIdsForBatch.has(s.sectionId)
+                                );
+                        
+                                const existingEnrollments = new Set(newEnrollments.filter(e => e.courseId === c.id).map(e => e.studentId));
                                 
-                            newEnrollments.push(...enrollmentsToAdd);
+                                const enrollmentsToAdd = activeStudentsForBatch
+                                    .filter(s => !existingEnrollments.has(s.id))
+                                    .map(s => ({ courseId: c.id, studentId: s.id, sectionId: s.sectionId }));
+                                    
+                                newEnrollments.push(...enrollmentsToAdd);
+                            }
                         }
                     }
                     return { ...c, status: newStatus };

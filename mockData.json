@@ -44,13 +44,18 @@
     { "id": "CBS", "name": "CBS" }
   ],
   "programs": [
-    { "id": "P1", "name": "BE ME", "collegeId": "CUIET" },
-    { "id": "P2", "name": "BE ECE", "collegeId": "CUIET" },
-    { "id": "P3", "name": "B. Pharma", "collegeId": "CCP" },
-    { "id": "P4", "name": "M. Pharma", "collegeId": "CCP" },
-    { "id": "P5", "name": "BBA", "collegeId": "CBS" },
-    { "id": "P6", "name": "MBA Global", "collegeId": "CBS" },
-    { "id": "P7", "name": "MBA Pharmacy", "collegeId": "CBS" }
+    { "id": "P1", "name": "BE ME", "collegeId": "CUIET", "duration": 4 },
+    { "id": "P2", "name": "BE ECE", "collegeId": "CUIET", "duration": 4 },
+    { "id": "P3", "name": "B. Pharma", "collegeId": "CCP", "duration": 4 },
+    { "id": "P4", "name": "M. Pharma", "collegeId": "CCP", "duration": 2 },
+    { "id": "P5", "name": "BBA", "collegeId": "CBS", "duration": 3 },
+    { "id": "P6", "name": "MBA Global", "collegeId": "CBS", "duration": 2 },
+    { "id": "P7", "name": "MBA Pharmacy", "collegeId": "CBS", "duration": 2 }
+  ],
+  "batches": [
+    { "id": "B_P1_2025", "programId": "P1", "name": "2025-2029" },
+    { "id": "B_P2_2025", "programId": "P2", "name": "2025-2029" },
+    { "id": "B_P2_2024", "programId": "P2", "name": "2024-2028" }
   ],
   "courses": [
     { "id": "C101", "name": "Introduction to Programming", "code": "CS101", "programId": "P2", "status": "Completed", "teacherId": "T_ECE_1", "target": 50, "internalWeightage": 25, "externalWeightage": 75, "attainmentLevels": { "level3": 80, "level2": 70, "level1": 50 } },
@@ -66,9 +71,9 @@
     { "id": "C_ME_2", "name": "Thermodynamics", "code": "ME201", "programId": "P1", "status": "Active", "teacherId": "T_ME_2", "target": 50, "internalWeightage": 25, "externalWeightage": 75, "attainmentLevels": { "level3": 80, "level2": 70, "level1": 50 } }
   ],
   "sections": [
-    { "id": "SEC_A_P2_2025", "name": "A", "programId": "P2", "batch": "2025-2029" },
-    { "id": "SEC_B_P2_2025", "name": "B", "programId": "P2", "batch": "2025-2029" },
-    { "id": "SEC_A_P1_2025", "name": "A", "programId": "P1", "batch": "2025-2029" }
+    { "id": "SEC_A_P2_2025", "name": "A", "programId": "P2", "batchId": "B_P2_2025" },
+    { "id": "SEC_B_P2_2025", "name": "B", "programId": "P2", "batchId": "B_P2_2025" },
+    { "id": "SEC_A_P1_2025", "name": "A", "programId": "P1", "batchId": "B_P1_2025" }
   ],
    "students": [
     {"id":"25ECE1001","name":"Alice Johnson","programId":"P2","status":"Active","sectionId":"SEC_A_P2_2025"},

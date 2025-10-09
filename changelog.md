@@ -2,6 +2,15 @@
 
 This document tracks all significant changes made to the NBA Outcome Based Education Portal application.
 
+## [Unreleased] - 2024-07-28
+
+### Feature: Centralized Batch Management & Program Durations
+- **New**: Admins can now define a `duration` (in years) for each academic program under the "Academic Structure" panel.
+- **New**: A "Manage Batches" section has been added for Admins to create and delete batches for each program. Batch names (e.g., "2025-2029") are automatically calculated based on the program's duration.
+- **Refactor**: The application now uses this central list of admin-created batches. Dynamic generation of batch years has been removed from the Sidebar and Batch Selection Modal.
+- **Refactor**: All components have been updated to use the new `Batch` data model, ensuring a consistent academic structure across the application when filtering or assigning students.
+- **Data Model**: Updated `types.ts` to include `Program.duration`, a new `Batch` interface, and changed `Section.batch` to `Section.batchId`. The `mockData.json` has been updated accordingly to reflect this new structure.
+
 ## [Unreleased] - 2024-07-27
 
 ### Mock Data and Documentation Update

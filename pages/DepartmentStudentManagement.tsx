@@ -1,17 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Program, Section, Student, StudentStatus } from '../types';
+import { Section, Student, StudentStatus } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
 import { Trash2 } from '../components/Icons';
 import SaveBar from '../components/SaveBar';
 import ConfirmationModal from '../components/ConfirmationModal';
-
-const getProgramDuration = (programName: string): number => {
-    const lowerCaseName = programName.toLowerCase();
-    if (lowerCaseName.includes('be') || lowerCaseName.includes('b. pharma')) return 4;
-    if (lowerCaseName.includes('mba') || lowerCaseName.includes('m. pharma')) return 2;
-    return 4; // Default
-};
 
 const DepartmentStudentManagement: React.FC = () => {
     const { currentUser, data, setData } = useAppContext();
@@ -36,24 +29,35 @@ const DepartmentStudentManagement: React.FC = () => {
         data.programs.filter(p => p.collegeId === currentUser?.collegeId)
     , [data.programs, currentUser]);
 
-    const batchYears = useMemo(() => {
-        const program = data.programs.find(p => p.id === selectedProgramId);
-        if (!program) return [];
-        const duration = getProgramDuration(program.name);
-        const startYears = Array.from({length: 8}, (_, i) => new Date().getFullYear() - i + 1);
-        return startYears.map(startYear => `${startYear}-${startYear + duration}`);
-    }, [selectedProgramId, data.programs]);
+    const batchesForProgram = useMemo(() => {
+        if (!selectedProgramId) return [];
+        return data.batches
+            .filter(b => b.programId === selectedProgramId)
+            .sort((a, b) => b.name.localeCompare(a.name));
+    }, [data.batches, selectedProgramId]);
+
 
     const { sections, students } = useMemo(() => {
         if (!selectedProgramId || !selectedBatch) {
             return { sections: [], students: [] };
         }
-        const sectionsForBatch = data.sections.filter(s => s.programId === selectedProgramId && s.batch === selectedBatch);
+        const batch = data.batches.find(b => b.programId === selectedProgramId && b.name === selectedBatch);
+        if (!batch) {
+            return { sections: [], students: [] };
+        }
+
+        const sectionsForBatch = data.sections.filter(s => s.batchId === batch.id);
         const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
 
-        const studentsForBatch = data.students.filter(s => s.programId === selectedProgramId && s.sectionId && sectionIdsForBatch.has(s.sectionId));
-        return { sections: sectionsForBatch, students: studentsForBatch.sort((a, b) => a.id.localeCompare(b.id)) };
-    }, [selectedProgramId, selectedBatch, data.sections, data.students]);
+        const allStudentsForProgram = data.students.filter(s => s.programId === selectedProgramId);
+
+        // Include students in sections of this batch AND unassigned students for this program
+        const studentsToDisplay = allStudentsForProgram.filter(s => 
+            !s.sectionId || sectionIdsForBatch.has(s.sectionId)
+        );
+        
+        return { sections: sectionsForBatch, students: studentsToDisplay.sort((a, b) => a.id.localeCompare(b.id)) };
+    }, [selectedProgramId, selectedBatch, data.sections, data.students, data.batches]);
     
     useEffect(() => {
         setDraftStudents(students);
@@ -87,11 +91,17 @@ const DepartmentStudentManagement: React.FC = () => {
         e.preventDefault();
         if (!newSectionName.trim() || !selectedProgramId || !selectedBatch) return;
 
+        const batch = data.batches.find(b => b.programId === selectedProgramId && b.name === selectedBatch);
+        if (!batch) {
+            alert("Selected batch is invalid. Please refresh.");
+            return;
+        }
+
         const newSection: Section = {
             id: `sec_${Date.now()}`,
             name: newSectionName.trim().toUpperCase(),
             programId: selectedProgramId,
-            batch: selectedBatch,
+            batchId: batch.id,
         };
         setData(prev => ({...prev, sections: [...prev.sections, newSection]}));
         setNewSectionName('');
@@ -173,7 +183,7 @@ const DepartmentStudentManagement: React.FC = () => {
                         <label htmlFor="batch-select" className="block text-sm font-medium text-gray-700">Batch</label>
                         <select id="batch-select" value={selectedBatch} onChange={e => setSelectedBatch(e.target.value)} disabled={!selectedProgramId} className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100">
                             <option value="">-- Select Batch --</option>
-                            {batchYears.map(year => <option key={year} value={year}>{year}</option>)}
+                            {batchesForProgram.map(batch => <option key={batch.id} value={batch.name}>{batch.name}</option>)}
                         </select>
                     </div>
                 </div>

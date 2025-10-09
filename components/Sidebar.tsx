@@ -1,18 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import {
-    PieChart, BookOpen, Users, Target, Settings, ArrowLeft, Grid
+    PieChart, BookOpen, Users, Target, Settings, Grid
 } from './Icons';
-import { Program } from '../types';
-
-const getProgramDuration = (programName: string): number => {
-    const lowerCaseName = programName.toLowerCase();
-    if (lowerCaseName.includes('be') || lowerCaseName.includes('b. pharma')) return 4;
-    if (lowerCaseName.includes('mba') || lowerCaseName.includes('m. pharma')) return 2;
-    return 4; // Default
-};
-
 
 const Sidebar: React.FC = () => {
   // FIX: Destructure selectedCollegeId and setSelectedCollegeId from context.
@@ -29,12 +20,12 @@ const Sidebar: React.FC = () => {
     return data.programs.filter(p => p.collegeId === selectedCollegeId);
   }, [data.programs, selectedCollegeId]);
 
-  const batchYears = useMemo(() => {
+  const batchesForProgram = useMemo(() => {
     if (!selectedProgram) return [];
-    const duration = getProgramDuration(selectedProgram.name);
-    const startYears = Array.from({length: 8}, (_, i) => new Date().getFullYear() - i);
-    return startYears.map(startYear => `${startYear}-${startYear + duration}`);
-  }, [selectedProgram]);
+    return data.batches
+        .filter(b => b.programId === selectedProgram.id)
+        .sort((a, b) => b.name.localeCompare(a.name)); // Sort descending by name
+  }, [data.batches, selectedProgram]);
 
   const handleCollegeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCollegeId = e.target.value;
@@ -53,8 +44,8 @@ const Sidebar: React.FC = () => {
     }
     const program = data.programs.find(p => p.id === newProgramId);
     if (program) {
-        const duration = getProgramDuration(program.name);
-        const defaultBatch = `${new Date().getFullYear()}-${new Date().getFullYear() + duration}`;
+        const programBatches = data.batches.filter(b => b.programId === program.id).sort((a,b) => b.name.localeCompare(a.name));
+        const defaultBatch = programBatches.length > 0 ? programBatches[0].name : '';
         // FIX: setSelectedCollegeId is now handled inside setProgramAndBatch for consistency.
         setProgramAndBatch(program, defaultBatch);
     }
@@ -114,7 +105,7 @@ const Sidebar: React.FC = () => {
                     <label htmlFor="batch-select" className="block text-sm font-medium text-gray-700">Batch</label>
                     <select id="batch-select" value={selectedBatch || ''} onChange={handleBatchChange} disabled={!selectedProgram} className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100">
                         <option value="">-- Select Batch --</option>
-                        {batchYears.map(year => <option key={year} value={year}>{year}</option>)}
+                        {batchesForProgram.map(batch => <option key={batch.id} value={batch.name}>{batch.name}</option>)}
                     </select>
                 </div>
             </div>

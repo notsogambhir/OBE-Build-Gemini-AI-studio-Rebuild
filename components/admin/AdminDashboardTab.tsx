@@ -28,10 +28,18 @@ const AdminDashboardTab: React.FC = () => {
         students = students.filter(s => s.programId === selectedProgram.id);
     }
     
+    // FIX: Correctly filter students by selected batch.
+    // The previous logic incorrectly tried to access a `batch` property on the `Section` type,
+    // and it did not properly look up the batch ID from the selected batch name.
     if (selectedBatch && selectedProgram) {
-        const sectionsForBatch = data.sections.filter(s => s.programId === selectedProgram.id && s.batch === selectedBatch);
-        const sectionIds = new Set(sectionsForBatch.map(s => s.id));
-        students = students.filter(s => s.sectionId && sectionIds.has(s.sectionId));
+        const batch = data.batches.find(b => b.programId === selectedProgram.id && b.name === selectedBatch);
+        if (batch) {
+            const sectionsForBatch = data.sections.filter(s => s.batchId === batch.id);
+            const sectionIds = new Set(sectionsForBatch.map(s => s.id));
+            students = students.filter(s => s.sectionId && sectionIds.has(s.sectionId));
+        } else {
+            students = [];
+        }
     }
 
     return {

@@ -42,6 +42,13 @@ export interface Program {
   id: string;
   name: string;
   collegeId: College;
+  duration: number; // in years
+}
+
+export interface Batch {
+  id: string;
+  programId: string;
+  name: string; // e.g. "2025-2029"
 }
 
 export interface Course {
@@ -82,7 +89,7 @@ export interface Section {
   id: string;
   name: string;
   programId: string;
-  batch: string;
+  batchId: string;
 }
 
 export interface CourseOutcome {
@@ -149,6 +156,7 @@ export interface AppData {
   users: User[];
   colleges: { id: College; name: string }[];
   programs: Program[];
+  batches: Batch[];
   courses: Course[];
   students: Student[];
   enrollments: Enrollment[];

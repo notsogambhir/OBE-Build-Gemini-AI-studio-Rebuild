@@ -1,5 +1,3 @@
-
-
 # Backend Development Guide: NBA OBE Portal (Django REST Framework)
 
 This document provides a comprehensive, step-by-step guide for building the backend server for the NBA OBE Portal frontend. The recommended stack is **Django**, **Django REST Framework (DRF)**, and **PostgreSQL**.
@@ -108,23 +106,28 @@ CORS_ALLOWED_ORIGINS = [
 
 ## 3. Step 2: Models & Migrations
 
-### Step 2a: Detailed Model Definitions (Database Schema)
+### Step 2a: Defining Relational Models
 
-Translate the interfaces in `types.ts` into Django models in `api/models.py`. The Django ORM uses these model definitions to generate and manage your PostgreSQL database schema. Use `ForeignKey` for one-to-many relationships and `JSONField` for flexible data structures.
+A robust backend starts with a well-defined database schema. We will translate the frontend's `types.ts` into Django models, but instead of using simple string IDs for relationships, we will use Django's powerful relational fields (`ForeignKey`, `ManyToManyField`). This enforces data integrity at the database level and makes querying much more efficient.
 
-**`api/models.py` (Example):**
+**`api/models.py` (Full Example):**
 
 ```python
 from django.db import models
-from django.db.models import JSONField # For newer Django versions
+from django.db.models import JSONField
 
-# It's good practice to define choices for enum-like fields
+# --- Choices for Enum-like fields ---
 class UserRole(models.TextChoices):
-    TEACHER = 'Teacher'
-    COORDINATOR = 'Program Co-ordinator'
-    UNIVERSITY = 'University'
-    ADMIN = 'Admin'
-    DEPARTMENT = 'Department'
+    TEACHER = 'Teacher', 'Teacher'
+    COORDINATOR = 'Program Co-ordinator', 'Program Co-ordinator'
+    UNIVERSITY = 'University', 'University'
+    ADMIN = 'Admin', 'Admin'
+    DEPARTMENT = 'Department', 'Department'
+
+class College(models.Model):
+    id = models.CharField(max_length=10, primary_key=True)
+    name = models.CharField(max_length=100)
+    def __str__(self): return self.name
 
 class User(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
@@ -134,44 +137,81 @@ class User(models.Model):
     role = models.CharField(max_length=50, choices=UserRole.choices)
     name = models.CharField(max_length=255)
     status = models.CharField(max_length=20, default='Active')
+
+    # For Department Head: College they manage
+    college = models.OneToOneField(College, on_delete=models.SET_NULL, null=True, blank=True, related_name='department_head')
     
-    # Relationships will be defined via other models' ForeignKeys
-    # or through explicit fields if needed.
+    # For Program Co-ordinator: Department head they report to
+    department = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='coordinators', limit_choices_to={'role': UserRole.DEPARTMENT})
+
+    # For Teachers: Program Co-ordinators they report to
+    reports_to = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='teachers', limit_choices_to={'role': UserRole.COORDINATOR})
     
-    def __str__(self):
-        return self.name
+    def __str__(self): return f"{self.name} ({self.role})"
 
 class Program(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=255)
-    collegeId = models.CharField(max_length=50) # Assuming college is a simple char field for now
+    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='programs')
+    duration = models.IntegerField(default=4) # Duration in years
+
+    def __str__(self): return self.name
+
+class Batch(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='batches')
+    name = models.CharField(max_length=20) # e.g., "2025-2029"
+
+    def __str__(self): return f"{self.program.name} - {self.name}"
+
+class Section(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=50)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='sections')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='sections')
+
+    def __str__(self): return f"{self.program.name} - {self.batch.name} - Section {self.name}"
+
+class Student(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=255)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='students')
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    status = models.CharField(max_length=20, default='Active')
+
+    def __str__(self): return self.name
 
 class Course(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=20)
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='courses')
-    target = models.IntegerField(default=50)
-    internalWeightage = models.IntegerField(default=25)
-    externalWeightage = models.IntegerField(default=75)
-    attainmentLevels = JSONField() # e.g., {"level3": 80, "level2": 70, "level1": 50}
     status = models.CharField(max_length=20, default='Future')
-    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
+    target = models.IntegerField(default=50)
+    
+    # Default teacher for the course
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses_taught', limit_choices_to={'role': UserRole.TEACHER})
+    
+    # To store section-specific teacher overrides: {"section_id": "teacher_id"}
+    sectionTeacherIds = JSONField(default=dict, blank=True)
+    
+    # ManyToMany relationship for enrollments
+    enrolled_students = models.ManyToManyField(Student, through='Enrollment', related_name='courses')
 
-# ... continue defining models for Student, Assessment, Mark, etc.
-# Here's an example for Assessment:
+    def __str__(self): return f"{self.code} - {self.name}"
 
-class Assessment(models.Model):
-    id = models.CharField(max_length=50, primary_key=True)
-    # sectionId from mock data implies a Section model
-    # section = models.ForeignKey('Section', on_delete=models.CASCADE, related_name='assessments')
-    sectionId = models.CharField(max_length=50)
-    name = models.CharField(max_length=255)
-    type = models.CharField(max_length=20) # 'Internal' or 'External'
-    questions = JSONField() # Stores the list of question objects
+class Enrollment(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True) # The section student is in for this course
+
+    class Meta:
+        unique_together = ('student', 'course')
+
+# ... other models like CourseOutcome, ProgramOutcome, Assessment, Mark ...
 ```
 
-### Step 2b: Understanding Migrations
+### Step 2b: Running & Understanding Migrations
 
 Django's migration system is how you manage your database schema over time without writing SQL manually.
 
@@ -179,55 +219,83 @@ Django's migration system is how you manage your database schema over time witho
     ```bash
     python manage.py makemigrations
     ```
-    Django inspects your models and compares them to the current state of your database schema (tracked by previous migration files). It then generates a new migration file in the `api/migrations/` directory. This file is Python code that describes the changes needed (e.g., create table, add column, alter column type).
+    Django inspects your models and generates new migration files in the `api/migrations/` directory. These files are Python code describing the changes needed (e.g., create a table, add a column).
 
 2.  **Apply Migrations**: To apply the pending migrations to your database, run:
     ```bash
     python manage.py migrate
     ```
-    Django will connect to your PostgreSQL database, read the unapplied migration files, and execute the necessary SQL commands to update the schema.
+    Django connects to PostgreSQL and executes the necessary SQL to update your schema.
 
-This two-step process allows you to version-control your database schema alongside your code.
+#### **Migration Best Practices**
+
+*   **`null=True` vs. `blank=True`**: `null=True` allows the database column to store a `NULL` value. `blank=True` tells Django's admin and forms that the field is not required (form validation). For a `CharField`, you usually want `blank=True` but not `null=True`. For a `ForeignKey`, you often need both `null=True` and `blank=True` if the relationship is optional.
+*   **NEVER Edit Migration Files Manually**: Unless you are an expert, do not edit the files in the `migrations` folder. If you make a mistake in your models, it's better to fix the model and generate a *new* migration.
+*   **Team Workflow**: When working in a team, always `git pull` the latest changes before running `makemigrations` to avoid conflicts.
+*   **Resetting (Early Development)**: If you've made a mess of migrations early in development (before any real data exists), you can reset an app's migrations:
+    1.  Delete all files inside `api/migrations/` except for `__init__.py`.
+    2.  Drop the database tables for the `api` app.
+    3.  Run `python manage.py makemigrations api`.
+    4.  Run `python manage.py migrate`.
 
 ## 4. Step 3: Seeding Initial Data
 
-To populate your database for development, create a custom management command. This command will read from the `mockData.json` file.
+To populate your relational database, your seeding script must create objects in the correct order and handle relationships properly.
 
-**`api/management/commands/seed_data.py`**:
+**`api/management/commands/seed_data.py` (Updated Logic):**
 
 ```python
 import json
 from django.core.management.base import BaseCommand
-from api.models import User, Program, Course # Import all your models
+from django.contrib.auth.hashers import make_password
+from api.models import User, Program, College, Batch, Section, Course # Import all your models
 
 class Command(BaseCommand):
     help = 'Seeds the database with initial data from mockData.json'
 
     def handle(self, *args, **options):
-        # The command assumes `mockData.json` is in the root of your Django project.
-        # The file is already in pure JSON format.
-        
         with open('mockData.json', 'r') as f:
             data = json.load(f)
 
-        self.stdout.write("Seeding data...")
-
-        # Clear existing data
-        User.objects.all().delete()
+        self.stdout.write("Clearing old data...")
+        # Clear data in reverse order of dependency
+        Course.objects.all().delete()
+        Section.objects.all().delete()
+        Batch.objects.all().delete()
         Program.objects.all().delete()
-        # ... delete other models
+        User.objects.all().delete()
+        College.objects.all().delete()
 
-        for user_data in data['users']:
-            # You must hash the password here before saving!
-            # from django.contrib.auth.hashers import make_password
-            # user_data['password'] = make_password(user_data['password'])
-            User.objects.create(**user_data)
+        self.stdout.write("Seeding new data...")
 
+        # Seed Colleges (no dependencies)
+        for college_data in data['colleges']:
+            College.objects.create(**college_data)
+
+        # Seed Programs
+        programs_map = {}
         for program_data in data['programs']:
-            Program.objects.create(**program_data)
+            college = College.objects.get(id=program_data.pop('collegeId'))
+            program = Program.objects.create(college=college, **program_data)
+            programs_map[program.id] = program
         
-        # ... continue for all other data types
-        
+        # Seed Batches
+        batches_map = {}
+        for batch_data in data['batches']:
+            program = programs_map[batch_data.pop('programId')]
+            batch = Batch.objects.create(program=program, **batch_data)
+            batches_map[batch.id] = batch
+
+        # Seed Sections
+        for section_data in data['sections']:
+            program = programs_map[section_data.pop('programId')]
+            batch = batches_map[section_data.pop('batchId')]
+            Section.objects.create(program=program, batch=batch, **section_data)
+
+        # ... continue seeding Users, Courses, Students, etc. ...
+        # Remember to look up related objects (like Program, Batch, Section) from the maps
+        # before creating objects with ForeignKey relationships.
+
         self.stdout.write(self.style.SUCCESS('Successfully seeded database.'))
 ```
 
@@ -235,23 +303,28 @@ Run the command: `python manage.py seed_data`.
 
 ## 5. Step 4: Serializers
 
-Create serializers in `api/serializers.py` to convert your models to and from JSON.
+Create serializers in `api/serializers.py`. You can control how relationships (`ForeignKey`, `ManyToManyField`) are represented in your JSON output.
 
 ```python
 # api/serializers.py
 from rest_framework import serializers
-from .models import User, Program, Course
+from .models import User, Program, Course, College, Batch
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__' # Or list specific fields
+        fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}} # Don't send password back
 
 class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
-        fields = '__all__'
+        fields = ['id', 'name', 'college', 'duration']
+
+class BatchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Batch
+        fields = ['id', 'program', 'name']
 
 # ... continue for all models
 ```
@@ -280,7 +353,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         college_id = self.request.query_params.get('collegeId')
         if college_id:
-            queryset = queryset.filter(collegeId=college_id)
+            # Note the double underscore for filtering on a related model's field
+            queryset = queryset.filter(college__id=college_id) 
         return queryset
 
 # ... continue for all models
@@ -293,11 +367,12 @@ Use DRF's `DefaultRouter` in `api/urls.py` to wire up the ViewSets.
 ```python
 # api/urls.py
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, ProgramViewSet
+from .views import UserViewSet, ProgramViewSet, #... import others
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'programs', ProgramViewSet)
+router.register(r'batches', BatchViewSet)
 # ... register all ViewSets
 
 urlpatterns = router.urls
@@ -345,12 +420,14 @@ This is crucial for security.
     ```python
     # api/views.py
     from .permissions import IsAdmin, IsProgramCoordinator
+    from rest_framework.permissions import OR
     
     class CourseViewSet(viewsets.ModelViewSet):
         # ...
         def get_permissions(self):
             if self.action in ['create', 'update', 'partial_update', 'destroy']:
-                self.permission_classes = [IsAdmin | IsProgramCoordinator] # Allow Admin OR PC to modify
+                # Allow Admin OR PC to modify. Use DRF's built-in logic operators.
+                self.permission_classes = [OR(IsAdmin, IsProgramCoordinator)] 
             return super().get_permissions()
     ```
 
@@ -370,12 +447,15 @@ Here is a list of the primary endpoints you'll need to build.
 | `PUT`  | `/api/users/{id}/`          | Admin                      | Update a user's details.                           |
 | `GET`  | `/api/colleges/`            | Authenticated              | Get a list of all colleges.                        |
 | `GET`  | `/api/programs/`            | Authenticated              | Get all programs. Supports `?collegeId=` filter.   |
+| `GET`  | `/api/batches/`             | Authenticated              | Get batches. Supports `?programId=` filter.        |
+| `POST` | `/api/batches/`             | Admin                      | Create a new batch for a program.                  |
+| `DELETE`|`/api/batches/{id}/`        | Admin                      | Delete a batch.                                    |
 | `GET`  | `/api/courses/`             | Authenticated              | Get courses. Supports `?programId=` filter.        |
 | `PUT`  | `/api/courses/{id}/`        | Admin, PC                  | Update a course (status, teacher, settings).       |
 | `POST` | `/api/courses/`             | Admin, PC                  | Create a new course.                               |
 | `GET`  | `/api/students/`            | Admin, PC, Teacher         | Get students. Supports `?programId=` filter.       |
 | `PUT`  | `/api/students/{id}/`       | Admin, PC, Dept Head       | Update a student (status, section assignment).     |
-| `GET`  | `/api/sections/`            | Admin, Dept Head           | Get sections. Supports `?programId=&batch=` filter.|
+| `GET`  | `/api/sections/`            | Admin, Dept Head           | Get sections. Supports `?programId=&batchId=` filter.|
 | `POST` | `/api/sections/`            | Dept Head                  | Create a new section.                              |
 | `DELETE`|`/api/sections/{id}/`       | Dept Head                  | Delete a section.                                  |
 | `GET`  | `/api/course-outcomes/`     | Authenticated              | Get COs. Supports `?courseId=` filter.             |

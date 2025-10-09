@@ -31,9 +31,14 @@ const StudentsList: React.FC = () => {
         if (selectedProgram) {
             students = students.filter(s => s.programId === selectedProgram.id);
             if (selectedBatch) {
-                const sectionsForBatch = data.sections.filter(s => s.programId === selectedProgram.id && s.batch === selectedBatch);
-                const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
-                students = students.filter(s => s.sectionId && sectionIdsForBatch.has(s.sectionId));
+                const batch = data.batches.find(b => b.programId === selectedProgram.id && b.name === selectedBatch);
+                if (batch) {
+                    const sectionsForBatch = data.sections.filter(s => s.batchId === batch.id);
+                    const sectionIdsForBatch = new Set(sectionsForBatch.map(s => s.id));
+                    students = students.filter(s => s.sectionId && sectionIdsForBatch.has(s.sectionId));
+                } else {
+                    students = []; // No batch found, show no students
+                }
             }
         } else if (selectedCollegeId) {
             const programIdsInCollege = new Set(data.programs.filter(p => p.collegeId === selectedCollegeId).map(p => p.id));
@@ -70,7 +75,7 @@ const StudentsList: React.FC = () => {
       pageTitle: title,
       subTitle: subtitle
     }
-  }, [data.students, data.programs, data.sections, data.colleges, selectedProgram, selectedBatch, currentUser, selectedCollegeId, searchTerm, isAdmin]);
+  }, [data, selectedProgram, selectedBatch, currentUser, selectedCollegeId, searchTerm, isAdmin]);
   
   const canAddStudents = canManage && (isProgramCoordinator || (isAdmin && selectedProgram));
 
