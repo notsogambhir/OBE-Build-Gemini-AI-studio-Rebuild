@@ -1,3 +1,25 @@
+/**
+ * @file CoPoMappingMatrix.tsx
+ * @description
+ * This component is the "CO-PO Mapping" tab within the `CourseDetail` page. It's responsible
+ * for displaying and managing the relationships between a course's Course Outcomes (COs)
+ * and the program's Program Outcomes (POs).
+ *
+ * What it does:
+ * 1.  **Displays a Matrix**: It shows a grid or table where the rows are the COs for the
+ *     current course, and the columns are the POs for the program.
+ * 2.  **Manages Mappings**: In each cell of the grid, it displays a dropdown (0-3) that
+ *     represents the strength of the mapping between that CO and PO (0 means no mapping).
+ * 3.  **Handles Data Transformation**: The mapping data in `mockData.json` is stored as a flat
+ *     list of connections (e.g., `{ courseId, coId, poId, level }`). This component transforms
+ *     that list into a nested object structure that's easier for the UI to read (like a 2D array).
+ * 4.  **Draft State**: It uses a "draft state" pattern. When a user changes a mapping level
+ *     in a dropdown, the change is stored in a temporary "draft". The `SaveBar` appears,
+ *     allowing the user to save all changes at once or cancel them.
+ * 5.  **Saves Data**: When saving, it transforms the nested object back into a flat list
+ *     to update the main application data.
+ */
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CoPoMapping, CoPoMap } from '../types';
@@ -6,11 +28,15 @@ import SaveBar from './SaveBar';
 
 
 const CoPoMappingMatrix: React.FC = () => {
+  // Get the `courseId` from the URL to know which course we're working with.
   const { courseId } = useParams<{ courseId: string }>();
+  // Get data, tools, and user info from the "magic backpack".
   const { data, setData, currentUser } = useAppContext();
   
+  // Check if the current user has permission to edit the mappings.
   const canManage = currentUser?.role === 'Teacher' || currentUser?.role === 'Program Co-ordinator';
 
+  // `useMemo` is a "smart calculator" that gets all the relevant COs, POs, and existing mappings for this course.
   const { courseOutcomes, programOutcomes, initialMapArray } = useMemo(() => {
     const course = data.courses.find(c => c.id === courseId);
     return {
@@ -20,29 +46,38 @@ const CoPoMappingMatrix: React.FC = () => {
     };
   }, [courseId, data]);
   
+  // --- State Management for Drafts ---
+  // `draftMapping` is the nested object that backs our UI. It looks like: { "co_id_1": { "po_id_1": 3 } }
   const [draftMapping, setDraftMapping] = useState<CoPoMap>({});
+  // `initialMapping` is the saved version, used for checking if there are unsaved changes.
   const [initialMapping, setInitialMapping] = useState<CoPoMap>({});
 
+  // This `useEffect` hook performs the initial data transformation.
+  // It runs once when the component loads, converting the `initialMapArray` (a flat list)
+  // into the `CoPoMap` structure (a nested object) for our state.
   useEffect(() => {
     const map: CoPoMap = {};
+    // First, create an entry for every CO.
     for (const co of courseOutcomes) {
       map[co.id] = {};
     }
+    // Then, fill in the mapping levels from the flat array.
     for (const m of initialMapArray) {
       if (map[m.coId]) {
         map[m.coId][m.poId] = m.level;
       }
     }
-    setDraftMapping(map);
+    setDraftMapping(map); // Set both draft and initial states to this transformed data.
     setInitialMapping(map);
   }, [courseOutcomes, initialMapArray]);
 
+  // `isDirty` checks for unsaved changes by comparing the text versions of the draft and initial mappings.
   const isDirty = useMemo(() => JSON.stringify(draftMapping) !== JSON.stringify(initialMapping), [draftMapping, initialMapping]);
 
+  // This function runs every time a user changes a value in one of the dropdowns.
   const handleMappingChange = (coId: string, poId: string, value: string) => {
     const level = parseInt(value, 10);
-    if (isNaN(level) || level < 0 || level > 3) return;
-    
+    // Update the `draftMapping` state with the new level.
     setDraftMapping(prev => ({
       ...prev,
       [coId]: {
@@ -52,31 +87,38 @@ const CoPoMappingMatrix: React.FC = () => {
     }));
   };
 
+  // This function runs when the "Save Changes" button is clicked in the SaveBar.
   const handleSave = () => {
     if (!courseId) return;
     
+    // --- Data Transformation (Reverse) ---
+    // Here, we convert our nested `draftMapping` object back into a flat array,
+    // which is the format our main application data expects.
     const newMappingArray: CoPoMapping[] = [];
     Object.keys(draftMapping).forEach(coId => {
       Object.keys(draftMapping[coId]).forEach(poId => {
         const level = draftMapping[coId][poId];
-        if (level > 0) {
+        if (level > 0) { // We only save mappings with a level greater than 0.
           newMappingArray.push({ courseId, coId, poId, level });
         }
       });
     });
 
+    // Update the main application data in the "magic backpack".
     setData(prev => ({
       ...prev,
       coPoMapping: [
-        ...prev.coPoMapping.filter(m => m.courseId !== courseId),
-        ...newMappingArray
+        ...prev.coPoMapping.filter(m => m.courseId !== courseId), // Remove all old mappings for this course.
+        ...newMappingArray // Add the new mappings from our draft.
       ]
     }));
     
-    setInitialMapping(draftMapping); // Set the new saved state as the initial state
+    // The draft is now the new saved state.
+    setInitialMapping(draftMapping);
     alert("Mapping saved successfully!");
   };
 
+  // This function runs when the "Cancel" button is clicked. It discards all changes.
   const handleCancel = () => {
     setDraftMapping(initialMapping);
   };
@@ -123,6 +165,7 @@ const CoPoMappingMatrix: React.FC = () => {
         </table>
       </div>
       
+      {/* The SaveBar only appears if `isDirty` is true. */}
       <SaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
     </div>
   );
