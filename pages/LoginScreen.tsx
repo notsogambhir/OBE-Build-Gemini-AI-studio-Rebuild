@@ -15,7 +15,8 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext'; // Helper to get shared data.
 import { College } from '../types'; // Imports the `College` type from our data dictionary.
 
@@ -25,7 +26,7 @@ const LoginScreen: React.FC = () => {
     const { login, data, setProgramAndBatch } = useAppContext();
     
     // `useNavigate` gives us a function to tell the app to go to a different page.
-    const navigate = useNavigate();
+    const navigate = ReactRouterDOM.useNavigate();
 
     // `useState` is a React Hook that gives a component its own memory.
     // Here, we create pieces of memory to store what the user types into the form fields.
@@ -64,6 +65,38 @@ const LoginScreen: React.FC = () => {
             }
         } else {
             console.error("Developer shortcut failed: Could not find user 'pc_ece' or their assigned program in mockData.");
+        }
+    };
+    
+    // Configuration for the quick login buttons.
+    const quickLoginUsers = [
+        { label: 'Teacher (ECE)', username: 'teacher_ece1', password: 'password', college: 'CUIET' as College, programUser: 'teacher_ece1' },
+        { label: 'PC (ECE)', username: 'pc_ece', password: 'password', college: 'CUIET' as College, programUser: 'pc_ece' },
+        { label: 'Department (CUIET)', username: 'dept_cuiet', password: 'password', college: 'CUIET' as College },
+        { label: 'Admin', username: 'admin', password: 'password', college: 'CUIET' as College },
+    ];
+
+    // This function handles the logic for the quick login buttons.
+    const handleQuickLogin = (userConfig: typeof quickLoginUsers[0]) => {
+        setError(''); // Clear any previous errors.
+        if (login(userConfig.username, userConfig.password, userConfig.college)) {
+            // If the user role requires program selection, pre-select one for them.
+            if (userConfig.programUser) {
+                const user = data.users.find(u => u.username === userConfig.programUser);
+                const program = user ? data.programs.find(p => p.id === user.programId) : undefined;
+                if (user && program) {
+                    // Find the latest batch for that program to make the demo relevant.
+                    const latestBatch = data.batches
+                        .filter(b => b.programId === program.id)
+                        .sort((a,b) => b.name.localeCompare(a.name))[0];
+                    if (latestBatch) {
+                        setProgramAndBatch(program, latestBatch.name);
+                    }
+                }
+            }
+            navigate('/'); // Navigate to the main app.
+        } else {
+            setError(`Quick login for '${userConfig.label}' failed. Please check mockData.`);
         }
     };
 
@@ -126,6 +159,25 @@ const LoginScreen: React.FC = () => {
                             </button>
                         </div>
                     </form>
+
+                     {/* Quick Login Buttons */}
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h4 className="font-semibold text-center text-sm text-gray-500 mb-3">Or use a Quick Login:</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                            {quickLoginUsers.map(user => (
+                                <button
+                                    key={user.username}
+                                    type="button"
+                                    onClick={() => handleQuickLogin(user)}
+                                    className="w-full px-2 py-2 text-xs font-bold text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                    aria-label={`Log in as ${user.label}`}
+                                >
+                                    {user.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* A helpful box showing demo login credentials. */}
                      <div className="p-4 mt-6 text-sm text-gray-600 bg-gray-50 rounded-lg">
                       <h4 className="font-semibold text-center">Demo Logins (password: "password")</h4>

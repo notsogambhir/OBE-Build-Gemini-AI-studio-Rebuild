@@ -19,17 +19,18 @@
  */
 
 import React, { useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { ArrowLeft } from '../components/Icons';
 
 const TeacherDetails: React.FC = () => {
     // `useParams` gets the `teacherId` from the URL.
-    const { teacherId } = useParams<{ teacherId: string }>();
+    const { teacherId } = ReactRouterDOM.useParams<{ teacherId: string }>();
     // We get our app's data from the "magic backpack".
     const { data } = useAppContext();
     // `useNavigate` gives us a function to go back to the previous page.
-    const navigate = useNavigate();
+    const navigate = ReactRouterDOM.useNavigate();
 
     // `useMemo` is a smart calculator that finds the teacher's data only when needed.
     const teacher = useMemo(() => data.users.find(u => u.id === teacherId), [data.users, teacherId]);
@@ -119,9 +120,9 @@ const TeacherDetails: React.FC = () => {
                                 Overall CO Attainment: {course.overallCoAttainment.toFixed(2)}%
                             </p>
                         </div>
-                        <Link to={`/courses/${course.id}`} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">
+                        <ReactRouterDOM.Link to={`/courses/${course.id}`} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">
                             Manage Course
-                        </Link>
+                        </ReactRouterDOM.Link>
                     </div>
                     <div className="mt-4 border-t pt-4">
                         <h3 className="text-lg font-semibold text-gray-700 mb-2">Assessments</h3>

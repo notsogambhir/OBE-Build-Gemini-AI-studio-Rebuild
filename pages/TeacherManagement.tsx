@@ -18,7 +18,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Link } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { User } from '../types';
 
@@ -132,9 +133,9 @@ const TeacherManagement: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         {/* This `Link` component from React Router navigates to the teacher's detail page. */}
-                                        <Link to={`/teachers/${teacher.id}`} className="text-indigo-600 hover:text-indigo-800 font-semibold">
+                                        <ReactRouterDOM.Link to={`/teachers/${teacher.id}`} className="text-indigo-600 hover:text-indigo-800 font-semibold">
                                             View Dashboard
-                                        </Link>
+                                        </ReactRouterDOM.Link>
                                     </td>
                                 </tr>
                             ))

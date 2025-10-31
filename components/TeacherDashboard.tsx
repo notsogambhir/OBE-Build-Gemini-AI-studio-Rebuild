@@ -16,7 +16,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { BookOpen } from './Icons'; // Import an icon for the course cards.
 
@@ -90,9 +91,9 @@ const TeacherDashboard: React.FC = () => {
                                     <h3 className="text-lg font-bold text-gray-800">{course.name} ({course.code})</h3>
                                 </div>
                                 {/* The "Manage Course" link navigates the user to the detailed course page. */}
-                                <Link to={`/courses/${course.id}`} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm">
+                                <ReactRouterDOM.Link to={`/courses/${course.id}`} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm">
                                     Manage Course
-                                </Link>
+                                </ReactRouterDOM.Link>
                             </div>
                             <div className="mt-3 border-t pt-3">
                                 <h4 className="text-sm font-semibold text-gray-600 mb-2">Assessment Status</h4>
@@ -105,7 +106,7 @@ const TeacherDashboard: React.FC = () => {
                                                 {assessment.hasMarks ? 'Marks Uploaded' : 'Pending'}
                                             </span>
                                         </div>
-                                    ))}
+                                    ))}\
                                     {course.assessments.length === 0 && <p className="text-sm text-gray-500">No assessments created for this course yet.</p>}
                                 </div>
                             </div>

@@ -16,7 +16,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext'; // Helper to get shared data.
 // Importing all the little icon images we need for the menu items.
 import {
@@ -38,7 +39,7 @@ const Sidebar: React.FC = () => {
   } = useAppContext();
   
   // `useNavigate` gives us a function to tell the app to go to a different page.
-  const navigate = useNavigate();
+  const navigate = ReactRouterDOM.useNavigate();
 
   // A simple check to see if the current user is an Admin, University, or Department user.
   // These are the roles that get to see the dropdown filters.
@@ -161,7 +162,7 @@ const Sidebar: React.FC = () => {
         {/* We loop through the `menuItems` and create a `NavLink` for each one. */}
         {menuItems.map(item => (
           // `NavLink` is a special type of link from React Router that knows if it's "active".
-          <NavLink
+          <ReactRouterDOM.NavLink
             key={item.to} // A unique key for each item in the list.
             to={item.to} // The URL this link will navigate to.
             // This function changes the link's style if it's the active page.
@@ -174,7 +175,7 @@ const Sidebar: React.FC = () => {
           >
             {item.icon} {/* The icon for the menu item */}
             <span className="ml-4 font-medium">{item.label}</span> {/* The text label */}
-          </NavLink>
+          </ReactRouterDOM.NavLink>
         ))}
       </nav>
     </aside>

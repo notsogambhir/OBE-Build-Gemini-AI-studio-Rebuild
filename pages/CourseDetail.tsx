@@ -18,7 +18,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 // Importing all the different components that will live inside the tabs.
 import ManageCourseOutcomes from '../components/ManageCourseOutcomes';
@@ -35,7 +36,7 @@ type Tab = 'Overview' | 'COs' | 'Assessments' | 'CO-PO Mapping' | 'CO Attainment
 
 const CourseDetail: React.FC = () => {
   // `useParams` is a hook from React Router that gives us access to URL parameters.
-  const { courseId } = useParams<{ courseId: string }>();
+  const { courseId } = ReactRouterDOM.useParams<{ courseId: string }>();
   // We get our app's data and the current user from the "magic backpack".
   const { data, currentUser } = useAppContext();
   // A piece of memory to remember which tab is currently active. Defaults to 'Overview'.

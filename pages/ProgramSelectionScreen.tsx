@@ -16,7 +16,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext'; // Helper to get shared data.
 import { Program } from '../types'; // Imports the `Program` type from our data dictionary.
 import BatchSelectionModal from '../components/BatchSelectionModal'; // Imports the batch selection popup.
@@ -28,7 +29,7 @@ const ProgramSelectionScreen: React.FC = () => {
     const { data, currentUser, selectedLoginCollege, logout } = useAppContext();
     
     // `useNavigate` gives us a function to tell the app to go to a different page.
-    const navigate = useNavigate();
+    const navigate = ReactRouterDOM.useNavigate();
     
     // `useState` gives the component its own memory.
     // `isModalOpen` remembers whether the batch selection popup should be visible or not.
