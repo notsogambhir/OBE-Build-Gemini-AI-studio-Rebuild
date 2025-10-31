@@ -14,8 +14,7 @@
  */
 
 import React from 'react';
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom'; // A tool for programmatically changing the page.
+import { useNavigate } from 'react-router-dom'; // A tool for programmatically changing the page.
 import { useAppContext } from '../hooks/useAppContext'; // Helper to get shared data.
 import { LogOut, Grid } from './Icons'; // Imports the logout and grid icon images.
 
@@ -24,7 +23,7 @@ const Header: React.FC = () => {
     const { currentUser, selectedProgram, selectedBatch, logout, goBackToProgramSelection } = useAppContext();
     
     // `useNavigate` gives us a function (`navigate`) to tell the app to go to a different URL.
-    const navigate = ReactRouterDOM.useNavigate();
+    const navigate = useNavigate();
 
     /**
      * This function is called when the user clicks the logout button.

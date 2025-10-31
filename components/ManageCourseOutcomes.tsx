@@ -15,8 +15,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CourseOutcome } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import ExcelUploader from './ExcelUploader';
@@ -24,7 +23,7 @@ import SaveBar from './SaveBar';
 
 const ManageCourseOutcomes: React.FC = () => {
   // `useParams` gets the `courseId` from the URL, so we know which course we're working with.
-  const { courseId } = ReactRouterDOM.useParams<{ courseId: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
   // We get our app's data, tools, and the current user from the "magic backpack".
   const { data, setData, currentUser } = useAppContext();
 

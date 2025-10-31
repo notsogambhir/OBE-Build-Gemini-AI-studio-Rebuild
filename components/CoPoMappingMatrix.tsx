@@ -21,8 +21,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CoPoMapping, CoPoMap } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import SaveBar from './SaveBar';
@@ -30,7 +29,7 @@ import SaveBar from './SaveBar';
 
 const CoPoMappingMatrix: React.FC = () => {
   // Get the `courseId` from the URL to know which course we're working with.
-  const { courseId } = ReactRouterDOM.useParams<{ courseId: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
   // Get data, tools, and user info from the "magic backpack".
   const { data, setData, currentUser } = useAppContext();
   

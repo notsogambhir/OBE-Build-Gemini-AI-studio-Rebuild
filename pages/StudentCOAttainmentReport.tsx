@@ -13,8 +13,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import PrintableReport from '../components/PrintableReport';
 
@@ -27,7 +26,7 @@ interface StudentCOAttainmentReportProps {
 
 const StudentCOAttainmentReport: React.FC<StudentCOAttainmentReportProps> = ({ courseId: propCourseId, isPrintable = false }) => {
     // Get the courseId from the URL if it's not passed as a prop.
-    const { courseId: paramCourseId } = ReactRouterDOM.useParams<{ courseId: string }>();
+    const { courseId: paramCourseId } = useParams<{ courseId: string }>();
     const courseId = propCourseId || paramCourseId;
 
     // Get data and user info from the "magic backpack".

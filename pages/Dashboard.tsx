@@ -15,8 +15,7 @@
 
 import React, { useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext'; // Helper to get shared data.
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Target, PieChart } from '../components/Icons'; // Imports icon images.
 import StatCard from '../components/StatCard'; // Imports the reusable stat card component.
 import TeacherDashboard from '../components/TeacherDashboard'; // Import the new, specialized dashboard for teachers.
@@ -27,7 +26,7 @@ const Dashboard: React.FC = () => {
     const { data, selectedProgram, currentUser } = useAppContext();
     
     // `useNavigate` gives us a function to tell the app to go to a different page.
-    const navigate = ReactRouterDOM.useNavigate();
+    const navigate = useNavigate();
 
     // --- Role-Based Rendering Logic ---
     // If the current user is a Teacher, we show them their own special dashboard.

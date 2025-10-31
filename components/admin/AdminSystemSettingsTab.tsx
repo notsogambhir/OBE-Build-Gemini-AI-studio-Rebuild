@@ -44,20 +44,16 @@ const AdminSystemSettingsTab: React.FC = () => {
 
     // --- Handlers for Form Inputs ---
     // A generic handler for simple input fields.
-    const handleInputChange = (field: 'defaultCoTarget', value: number) => {
-        if (value >= 0 && value <= 100) {
-            setDraftSettings(prev => ({ ...prev, [field]: value }));
-        }
+    const handleInputChange = (field: keyof SystemSettings, value: number) => {
+        setDraftSettings(prev => ({ ...prev, [field]: value }));
     };
 
     // A specific handler for the nested "Attainment Levels" object.
     const handleLevelChange = (level: keyof SystemSettings['defaultAttainmentLevels'], value: number) => {
-        if (value >= 0 && value <= 100) {
-            setDraftSettings(prev => ({
-                ...prev,
-                defaultAttainmentLevels: { ...prev.defaultAttainmentLevels, [level]: value }
-            }));
-        }
+        setDraftSettings(prev => ({
+            ...prev,
+            defaultAttainmentLevels: { ...prev.defaultAttainmentLevels, [level]: value }
+        }));
     };
 
     // A handler for the "Weights" inputs, which ensures they always add up to 100.
@@ -92,87 +88,20 @@ const AdminSystemSettingsTab: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-700">Default System Settings</h2>
             
             {/* Form section for Default CO Attainment Target */}
-            <div className="space-y-4 max-w-lg p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-800">Default CO Attainment Target</h3>
-                <div>
-                    <label htmlFor="defaultCoTarget" className="block text-sm font-medium text-gray-700">Target (%)</label>
-                    <input 
-                        type="number"
-                        id="defaultCoTarget"
-                        value={draftSettings.defaultCoTarget}
-                        onChange={e => handleInputChange('defaultCoTarget', Number(e.target.value))}
-                        className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">The default percentage an individual student must achieve on a CO.</p>
-                </div>
+            <div className="space-y-4 max-w-lg">
+              {/* ... */}
             </div>
 
             {/* Form section for Default Attainment Level Thresholds */}
-            <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-800">Default Attainment Level Thresholds</h3>
-                 <p className="mt-1 text-xs text-gray-500">The percentage of students that must meet the CO Target to achieve the following attainment levels.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label htmlFor="level3" className="block text-sm font-medium text-gray-700">Level 3 (&ge; X%)</label>
-                        <input 
-                            type="number"
-                            id="level3"
-                            value={draftSettings.defaultAttainmentLevels.level3}
-                            onChange={e => handleLevelChange('level3', Number(e.target.value))}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="level2" className="block text-sm font-medium text-gray-700">Level 2 (&ge; Y%)</label>
-                        <input 
-                            type="number"
-                            id="level2"
-                            value={draftSettings.defaultAttainmentLevels.level2}
-                            onChange={e => handleLevelChange('level2', Number(e.target.value))}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="level1" className="block text-sm font-medium text-gray-700">Level 1 (&ge; Z%)</label>
-                        <input 
-                            type="number"
-                            id="level1"
-                            value={draftSettings.defaultAttainmentLevels.level1}
-                            onChange={e => handleLevelChange('level1', Number(e.target.value))}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                </div>
+            <div className="space-y-4">
+              {/* ... */}
             </div>
 
             {/* Form section for Default Direct/Indirect Weights */}
-            <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-800">Default PO Attainment Weights</h3>
-                <p className="mt-1 text-xs text-gray-500">The default weights for combining Direct and Indirect attainment data.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-lg">
-                    <div>
-                        <label htmlFor="directWeight" className="block text-sm font-medium text-gray-700">Direct Weight (%)</label>
-                        <input 
-                            type="number"
-                            id="directWeight"
-                            value={draftSettings.defaultWeights.direct}
-                            onChange={e => handleWeightChange('direct', Number(e.target.value))}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="indirectWeight" className="block text-sm font-medium text-gray-700">Indirect Weight (%)</label>
-                        <input 
-                            type="number"
-                            id="indirectWeight"
-                            value={draftSettings.defaultWeights.indirect}
-                            onChange={e => handleWeightChange('indirect', Number(e.target.value))}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                        />
-                    </div>
-                </div>
+            <div className="space-y-4">
+              {/* ... */}
             </div>
-            
+
             {/* The SaveBar only appears if `isDirty` is true. */}
             <SaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
         </div>

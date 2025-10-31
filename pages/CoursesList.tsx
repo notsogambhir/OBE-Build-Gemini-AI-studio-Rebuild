@@ -23,8 +23,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-// FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
-import * as ReactRouterDOM from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Course, CourseStatus, Enrollment, User } from '../types';
 import ExcelUploader from '../components/ExcelUploader';
@@ -66,7 +65,7 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode; c
 const CoursesList: React.FC = () => {
     // We ask our "magic backpack" (AppContext) for all the data and tools we need.
     const { selectedProgram, selectedBatch, data, setData, currentUser, selectedCollegeId } = useAppContext();
-    const navigate = ReactRouterDOM.useNavigate(); // A tool to navigate to other pages.
+    const navigate = useNavigate(); // A tool to navigate to other pages.
 
     // --- State Management ---
     // Pieces of memory for the "Add Course" form.
