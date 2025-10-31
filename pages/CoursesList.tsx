@@ -1,27 +1,3 @@
-/**
- * @file CoursesList.tsx
- * @description
- * This file defines the `CoursesList` component, which is the main page for viewing and
- * managing courses. It's a very dynamic page that changes its appearance and functionality
- * based on the logged-in user's role.
- *
- * Key Responsibilities:
- * 1.  **Display Courses**: Shows courses grouped by their status ("Active", "Future", "Completed").
- * 2.  **Role-Based Filtering**: The list of courses is heavily filtered.
- *     - An **Admin** can see courses for any college/program they select in the sidebar.
- *     - A **Program Co-ordinator** sees all courses for their specific program.
- *     - A **Teacher** only sees the courses they are personally assigned to.
- * 3.  **Course Management (for PC/Admin)**:
- *     - Allows adding a new course manually via a form.
- *     - Allows bulk-uploading courses from an Excel file.
- *     - Allows assigning a teacher to a course via a dropdown.
- *     - Allows changing the status of one or more courses (e.g., from "Future" to "Active").
- * 4.  **Bulk Actions**: When a user selects multiple courses, a "bulk action" bar appears at the top,
- *     allowing them to change the status of all selected courses at once.
- * 5.  **Student Enrollment**: When a course is marked as "Active", it automatically enrolls all
- *     active students from the currently selected batch into that course.
- */
-
 import React, { useState, useMemo } from 'react';
 // FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
 import * as ReactRouterDOM from 'react-router-dom';
@@ -31,28 +7,20 @@ import ExcelUploader from '../components/ExcelUploader';
 import { ChevronDown, ChevronUp } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
 
-/**
- * A small helper component that creates a "collapsible" section.
- * It shows a title and a count, and when you click it, it expands to show its `children`.
- * It's used to hide the "Future" and "Completed" course lists until the user wants to see them.
- */
+// Helper component for collapsible sections
 const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode; count: number }> = ({ title, children, count }) => {
-    // A piece of memory to remember if this section is open or closed.
     const [isOpen, setIsOpen] = useState(false);
-    // If there are no items to show in this section, we don't render anything at all.
     if (count === 0) return null;
 
     return (
         <div className="bg-white rounded-lg shadow-md">
             <button
                 className="w-full flex justify-between items-center p-4 text-left font-semibold text-lg text-gray-700"
-                onClick={() => setIsOpen(!isOpen)} // When clicked, flip the `isOpen` value.
+                onClick={() => setIsOpen(!isOpen)}
             >
                 <span>{title} ({count})</span>
-                {/* Show a different arrow icon depending on whether it's open or closed. */}
                 {isOpen ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
             </button>
-            {/* The `children` are only rendered if `isOpen` is true. */}
             {isOpen && (
                 <div className="border-t border-gray-200">
                     {children}
@@ -62,20 +30,20 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode; c
     );
 };
 
-// This is the main component for the Courses List page.
 const CoursesList: React.FC = () => {
-    // We ask our "magic backpack" (AppContext) for all the data and tools we need.
     const { selectedProgram, selectedBatch, data, setData, currentUser, selectedCollegeId } = useAppContext();
+<<<<<<< HEAD
     const navigate = ReactRouterDOM.useNavigate(); // A tool to navigate to other pages.
+=======
+    const navigate = useNavigate();
+>>>>>>> parent of ca350be (feat: Initialize app entry points and types)
 
-    // --- State Management ---
-    // Pieces of memory for the "Add Course" form.
+    // State for course management
     const [newCourseCode, setNewCourseCode] = useState('');
     const [newCourseName, setNewCourseName] = useState('');
-    // A piece of memory to keep track of which courses the user has selected with checkboxes.
     const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
     
-    // A piece of memory for the confirmation popup (modal).
+    // State for confirmation modal
     const [confirmation, setConfirmation] = useState<{
         isOpen: boolean;
         title: string;
@@ -83,55 +51,43 @@ const CoursesList: React.FC = () => {
         onConfirm: () => void;
     } | null>(null);
 
-    // Some handy booleans to check the user's role.
     const isProgramCoordinator = currentUser?.role === 'Program Co-ordinator';
     const isAdmin = currentUser?.role === 'Admin';
-    const canManageCourses = isProgramCoordinator || isAdmin; // Only PCs and Admins can manage courses.
+    const canManageCourses = isProgramCoordinator || isAdmin;
 
-    /**
-     * `useMemo` is a performance optimization. It's like a smart calculator that only
-     * re-does its calculations when one of its inputs (the values in the `[]` array) changes.
-     * This is a very complex calculation, so we don't want to run it on every single render.
-     */
+    // Filter and sort courses by status
     const { activeCourses, futureCourses, completedCourses, teachersForPC, pageTitle } = useMemo(() => {
         let courses: Course[];
 
-        // --- Step 1: Filter courses based on the user's role and their selections. ---
         if (isAdmin) {
-            courses = data.courses; // An admin starts with all courses.
-            if (selectedProgram) { // If they selected a program in the sidebar...
-                courses = courses.filter(c => c.programId === selectedProgram.id); // ...filter by that program.
-            } else if (selectedCollegeId) { // If they only selected a college...
+            courses = data.courses;
+            if (selectedProgram) {
+                courses = courses.filter(c => c.programId === selectedProgram.id);
+            } else if (selectedCollegeId) {
                 const programIdsInCollege = new Set(data.programs.filter(p => p.collegeId === selectedCollegeId).map(p => p.id));
-                courses = courses.filter(c => programIdsInCollege.has(c.programId)); // ...filter by all programs in that college.
+                courses = courses.filter(c => programIdsInCollege.has(c.programId));
             }
         } else if (currentUser?.role === 'Teacher') {
-            // A teacher only sees courses where they are the main teacher OR assigned to a specific section.
             courses = data.courses.filter(c => 
                 c.teacherId === currentUser.id || 
                 (c.sectionTeacherIds && Object.values(c.sectionTeacherIds).includes(currentUser.id))
             );
-        } else { // This handles Program Co-ordinators and other roles.
+        } else { // Program Co-ordinator
             courses = data.courses.filter((c) => c.programId === selectedProgram?.id);
         }
         
-        // Sort the final list of courses alphabetically by code.
         courses = courses.sort((a, b) => a.code.localeCompare(b.code));
 
-        // --- Step 2: Get the list of teachers that a PC or Admin can assign. ---
         let teachersForPC: User[] = [];
         if (isProgramCoordinator) {
-            // A PC can assign any teacher that reports to them.
             const myManagedTeacherIds = new Set(data.users
                 .filter(u => u.role === 'Teacher' && u.programCoordinatorIds?.includes(currentUser.id))
                 .map(u => u.id));
             teachersForPC = data.users.filter(u => myManagedTeacherIds.has(u.id));
         } else if (isAdmin) {
-             // An admin can assign any teacher in the system.
              teachersForPC = data.users.filter(u => u.role === 'Teacher');
         }
 
-        // --- Step 3: Determine the title for the page. ---
         const title = isAdmin
             ? selectedProgram
                 ? `Courses for ${selectedProgram.name}`
@@ -142,7 +98,6 @@ const CoursesList: React.FC = () => {
                 ? 'My Assigned Courses'
                 : 'Courses';
 
-        // --- Step 4: Return all the calculated data. ---
         return {
             activeCourses: courses.filter(c => c.status === 'Active'),
             futureCourses: courses.filter(c => c.status === 'Future'),
@@ -152,51 +107,40 @@ const CoursesList: React.FC = () => {
         };
     }, [data, selectedProgram, currentUser, selectedCollegeId, isProgramCoordinator, isAdmin]);
     
-    // Check if the user has permission to add courses.
     const canAddCourse = canManageCourses && (isProgramCoordinator || (isAdmin && selectedProgram));
 
-    // This function is called by the ExcelUploader component when a file is successfully parsed.
     const handleExcelUpload = (uploadedData: { code: string; name: string }[]) => {
         if (!selectedProgram) {
              alert("Please select a program before bulk uploading courses.");
              return;
         }
-        // Convert the simple data from the Excel file into full `Course` objects.
         const newCourses: Course[] = uploadedData.map((row, index) => ({
             id: `c_excel_${Date.now()}_${index}`, code: row.code || 'N/A', name: row.name || 'Untitled Course',
             programId: selectedProgram.id, target: 50, internalWeightage: 25, externalWeightage: 75,
             attainmentLevels: { level3: 80, level2: 70, level1: 50 }, status: 'Future', teacherId: null
         }));
-        // Update the main application data in our magic backpack.
         setData(prev => ({ ...prev, courses: [...prev.courses, ...newCourses] }));
     };
 
-    // This runs when the user submits the "Add Course" form.
     const handleAddCourse = (e: React.FormEvent) => {
-        e.preventDefault(); // Stop the page from reloading.
+        e.preventDefault();
         if (!newCourseCode.trim() || !newCourseName.trim() || !selectedProgram) return;
-        // Create a new course object from the form data.
         const newCourse: Course = {
             id: `c_manual_${Date.now()}`, programId: selectedProgram.id, code: newCourseCode.trim(),
             name: newCourseName.trim(), target: 50, internalWeightage: 25, externalWeightage: 75,
             attainmentLevels: { level3: 80, level2: 70, level1: 50 }, status: 'Future', teacherId: null
         };
-        // Add the new course to our main data.
         setData(prev => ({ ...prev, courses: [...prev.courses, newCourse] }));
-        // Clear the form fields.
         setNewCourseCode(''); setNewCourseName('');
     };
 
-    // This function actually performs the status update after the user confirms.
     const performStatusUpdate = (ids: string[], newStatus: CourseStatus) => {
         setData(prev => {
             let newEnrollments: Enrollment[] = [...prev.enrollments];
             const updatedCourses = prev.courses.map(c => {
                 if (ids.includes(c.id)) {
-                    // **SPECIAL LOGIC**: If a course is being activated...
                     if (newStatus === 'Active' && c.status !== 'Active') {
                         if (selectedProgram && selectedBatch) {
-                            // Find all active students in the currently selected batch.
                             const batch = prev.batches.find(b => b.programId === selectedProgram.id && b.name === selectedBatch);
                             if (batch) {
                                 const sectionsForBatch = prev.sections.filter(s => s.batchId === batch.id);
@@ -209,10 +153,8 @@ const CoursesList: React.FC = () => {
                                     sectionIdsForBatch.has(s.sectionId)
                                 );
                         
-                                // Find which students are already enrolled to avoid duplicates.
                                 const existingEnrollments = new Set(newEnrollments.filter(e => e.courseId === c.id).map(e => e.studentId));
                                 
-                                // Create new enrollment records for the students who aren't already enrolled.
                                 const enrollmentsToAdd = activeStudentsForBatch
                                     .filter(s => !existingEnrollments.has(s.id))
                                     .map(s => ({ courseId: c.id, studentId: s.id, sectionId: s.sectionId }));
@@ -221,29 +163,24 @@ const CoursesList: React.FC = () => {
                             }
                         }
                     }
-                    // Return the course with its new status.
                     return { ...c, status: newStatus };
                 }
                 return c;
             });
-            // Return the updated data for both courses and enrollments.
             return { ...prev, courses: updatedCourses, enrollments: newEnrollments };
         });
-        // Clean up: clear the selection and close the confirmation modal.
         setSelectedCourseIds([]);
         setConfirmation(null);
     };
 
-    // This function opens the "Are you sure?" popup before changing a status.
     const promptStatusChange = (ids: string[], newStatus: CourseStatus) => {
         let message = '';
-        if (ids.length === 1) { // A message for a single course.
+        if (ids.length === 1) {
             const courseName = data.courses.find(c => c.id === ids[0])?.name;
             message = `Are you sure you want to mark '${courseName}' as ${newStatus}?`;
-        } else { // A message for multiple courses.
+        } else {
             message = `Are you sure you want to mark ${ids.length} selected courses as ${newStatus}?`;
         }
-        // Add an extra warning if activating a course.
         if (newStatus === 'Active') {
             if (!selectedBatch) {
                 alert("Please select a batch from the sidebar before activating a course.");
@@ -251,14 +188,12 @@ const CoursesList: React.FC = () => {
             }
             message += ` This will enroll all active students from the ${selectedBatch} batch into the course.`;
         }
-        // Open the confirmation modal with the correct message and action.
         setConfirmation({
             isOpen: true, title: 'Confirm Status Change', message,
             onConfirm: () => performStatusUpdate(ids, newStatus),
         });
     };
     
-    // This function actually assigns the teacher after confirmation.
     const performTeacherAssignment = (courseId: string, teacherId: string) => {
         setData(prev => ({
             ...prev,
@@ -269,12 +204,10 @@ const CoursesList: React.FC = () => {
         setConfirmation(null);
     };
 
-    // This runs when a PC changes the teacher in the dropdown for a course.
     const handleAssignTeacherChange = (courseId: string, newTeacherId: string) => {
         const course = data.courses.find(c => c.id === courseId);
         if (!course) return;
 
-        // If the course already has a different teacher, show a confirmation popup.
         if (course.teacherId && course.teacherId !== newTeacherId) {
              setConfirmation({
                 isOpen: true,
@@ -283,12 +216,11 @@ const CoursesList: React.FC = () => {
                 onConfirm: () => performTeacherAssignment(courseId, newTeacherId),
             });
         } else {
-            // If there was no previous teacher, just assign them directly.
             performTeacherAssignment(courseId, newTeacherId);
         }
     };
 
-    // --- Selection Handlers ---
+    // Selection handlers
     const handleToggleSelection = (courseId: string) => {
         setSelectedCourseIds(prev =>
             prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
@@ -297,17 +229,13 @@ const CoursesList: React.FC = () => {
     
     const handleToggleSelectAll = (courseIds: string[]) => {
         const allSelected = courseIds.every(id => selectedCourseIds.includes(id));
-        if (allSelected) { // If all are selected, unselect them all.
+        if (allSelected) {
             setSelectedCourseIds(prev => prev.filter(id => !courseIds.includes(id)));
-        } else { // Otherwise, select them all.
+        } else {
             setSelectedCourseIds(prev => [...new Set([...prev, ...courseIds])]);
         }
     };
 
-    /**
-     * A reusable function to render a table of courses.
-     * We pass it a list of courses, and it returns the JSX for the table.
-     */
     const renderCourseTable = (courses: Course[]) => {
         const courseIds = courses.map(c => c.id);
         const areAllSelected = courseIds.length > 0 && courseIds.every(id => selectedCourseIds.includes(id));
@@ -365,8 +293,6 @@ const CoursesList: React.FC = () => {
         );
     };
 
-    // --- Main Render Logic ---
-    // If the user is a Teacher, we show a simplified, read-only view.
     if (currentUser?.role === 'Teacher') {
         return (
            <div className="space-y-8">
@@ -385,7 +311,6 @@ const CoursesList: React.FC = () => {
         );
     }
 
-    // This is the full view for PCs and Admins.
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -403,7 +328,6 @@ const CoursesList: React.FC = () => {
                 </div>
             )}
             
-            {/* The bulk action bar only appears if one or more courses are selected. */}
             {selectedCourseIds.length > 0 && (
                 <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center justify-between sticky top-2 z-10">
                     <span className="font-semibold">{selectedCourseIds.length} course(s) selected</span>
@@ -428,7 +352,6 @@ const CoursesList: React.FC = () => {
                 {renderCourseTable(completedCourses)}
             </CollapsibleSection>
 
-            {/* The confirmation modal is only rendered if it has been activated. */}
             {confirmation && (
                 <ConfirmationModal 
                     isOpen={confirmation.isOpen}

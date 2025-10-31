@@ -1,135 +1,110 @@
-/**
- * @file CoursePoLinkageDashboard.tsx
- * @description
- * This component is a dashboard displayed on the `ProgramOutcomesList` page. Its purpose is to
- * show how each course in a program contributes to the Program Outcomes (POs).
- *
- * It performs two main calculations:
- * 1.  **Overall CO Attainment per Course**: For each course, it calculates the average
- *     attainment percentage across all its COs for all students in the selected batch. This
- *     gives a single performance score for the entire course.
- * 2.  **Average Linkage to POs**: For each course, it looks at the CO-PO Mapping Matrix
- *     and calculates the average mapping strength (from 0 to 3) from that course to each PO.
- *     This shows how strongly a course is designed to support each program outcome.
- *
- * The result is a table with courses as rows and POs as columns, providing a high-level
- * overview of the curriculum's structure and performance.
- */
-
 import React, { useMemo } from 'react';
 import { ProgramOutcome, Course } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 
-// This defines the "props" or properties that this component accepts from its parent.
 interface CoursePoLinkageDashboardProps {
     programOutcomes: ProgramOutcome[];
     courses: Course[];
 }
 
 const CoursePoLinkageDashboard: React.FC<CoursePoLinkageDashboardProps> = ({ programOutcomes, courses }) => {
-    // We get our app's data and the selected batch from the "magic backpack".
-    const { data, selectedBatch } = useAppContext();
+    const { data } = useAppContext();
 
-    /**
-     * This is the main calculation logic for the dashboard, wrapped in `useMemo` for performance.
-     * It will only re-run if its dependencies (courses, data, selectedBatch) change.
-     */
     const courseLinkageData = useMemo(() => {
-        if (!selectedBatch || courses.length === 0) return [];
-        const programId = courses[0].programId;
-
-        // --- Step 1: Filter students down to the selected batch. ---
-        const batch = data.batches.find(b => b.programId === programId && b.name === selectedBatch);
-        if (!batch) return [];
-        const sectionIdsForBatch = new Set(data.sections.filter(s => s.batchId === batch.id).map(s => s.id));
-
-        // --- Step 2: Pre-calculate lookup maps for performance. ---
-        // This is much faster than searching through arrays inside a loop.
-        
-        // Map of student marks: Student ID -> Assessment ID -> Question Name -> Marks
-        const studentMarksMap = new Map<string, Map<string, Map<string, number>>>();
-        data.marks.forEach(mark => {
-            if (!studentMarksMap.has(mark.studentId)) studentMarksMap.set(mark.studentId, new Map());
-            const assessmentMap = studentMarksMap.get(mark.studentId)!;
-            assessmentMap.set(mark.assessmentId, new Map(mark.scores.map(s => [s.q, s.marks])));
-        });
-
-        // Map of which questions belong to which CO: CO ID -> [List of Questions]
-        const coQuestionMap = new Map<string, { q: string; maxMarks: number; assessmentId: string }[]>();
-        data.courseOutcomes.forEach(co => coQuestionMap.set(co.id, []));
-        data.assessments.forEach(a => a.questions.forEach(q => q.coIds.forEach(coId => coQuestionMap.get(coId)?.push({ ...q, assessmentId: a.id }))));
-
-
-        // --- Step 3: Loop through each course to calculate its data row. ---
         return courses.map(course => {
             const courseOutcomes = data.courseOutcomes.filter(co => co.courseId === course.id);
-            
-            // Find all students who are enrolled in this course AND belong to the selected batch.
-            const studentsInCourse = data.students.filter(s => 
-                s.sectionId && sectionIdsForBatch.has(s.sectionId) &&
-                data.enrollments.some(e => e.studentId === s.id && e.courseId === course.id)
-            );
+            const enrolledStudentIds = new Set(data.enrollments.filter(e => e.courseId === course.id).map(e => e.studentId));
+            const studentsInCourse = data.students.filter(s => enrolledStudentIds.has(s.id));
 
-            // --- Calculation Part A: Overall CO Attainment for the course ---
+            // --- Calculate Overall CO Attainment ---
             let overallCoAttainment = 0;
             if (studentsInCourse.length > 0 && courseOutcomes.length > 0) {
-                // To get the course's overall attainment, we first calculate the average
-                // attainment for each individual student in the course...
+                // FIX: Assessments are linked via sections, not directly to courses. This logic finds all assessments for a course via its sections from enrollments.
+                const sectionIdsForCourse = new Set(data.enrollments.filter(e => e.courseId === course.id && e.sectionId).map(e => e.sectionId!));
+                const assessmentsForCourse = data.assessments.filter(a => sectionIdsForCourse.has(a.sectionId));
+
+                // Pre-compute maps for performance
+                const coQuestionMap = new Map<string, { q: string; maxMarks: number; assessmentId: string }[]>();
+                courseOutcomes.forEach(co => coQuestionMap.set(co.id, []));
+                assessmentsForCourse.forEach(assessment => {
+                    assessment.questions.forEach(q => {
+                        q.coIds.forEach(coId => {
+                            coQuestionMap.get(coId)?.push({ q: q.q, maxMarks: q.maxMarks, assessmentId: assessment.id });
+                        });
+                    });
+                });
+                
+                const studentMarksMap = new Map<string, Map<string, Map<string, number>>>();
+                data.marks.filter(m => enrolledStudentIds.has(m.studentId)).forEach(mark => {
+                    if (!studentMarksMap.has(mark.studentId)) studentMarksMap.set(mark.studentId, new Map());
+                    const assessmentMap = studentMarksMap.get(mark.studentId)!;
+                    const scoreMap = new Map<string, number>();
+                    mark.scores.forEach(s => scoreMap.set(s.q, s.marks));
+                    assessmentMap.set(mark.assessmentId, scoreMap);
+                });
+
                 const studentOverallAttainments = studentsInCourse.map(student => {
-                    const studentCoPercentages = courseOutcomes.map(co => {
+                    const studentCoAttainments = courseOutcomes.map(co => {
                         const questionsForCo = coQuestionMap.get(co.id) || [];
                         if (questionsForCo.length === 0) return 0;
                         
                         const totalMaxMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
+                        const studentAssessmentMarks = studentMarksMap.get(student.id);
                         let totalObtainedMarks = 0;
 
-                        const studentAllMarks = studentMarksMap.get(student.id);
-                        if (studentAllMarks) {
+                        if (studentAssessmentMarks) {
                             totalObtainedMarks = questionsForCo.reduce((sum, q) => {
-                                const marks = studentAllMarks.get(q.assessmentId)?.get(q.q);
-                                return sum + (marks || 0);
+                                const score = studentAssessmentMarks.get(q.assessmentId)?.get(q.q);
+                                return sum + (score || 0);
                             }, 0);
                         }
-
                         return totalMaxMarks > 0 ? (totalObtainedMarks / totalMaxMarks) * 100 : 0;
                     });
                     
-                    // ...calculate the student's personal average across all COs...
-                    return studentCoPercentages.length > 0 ? studentCoPercentages.reduce((a, b) => a + b, 0) / studentCoPercentages.length : 0;
+                    const avgAttainment = studentCoAttainments.reduce((sum, att) => sum + att, 0) / studentCoAttainments.length;
+                    return isNaN(avgAttainment) ? 0 : avgAttainment;
                 });
-                // ...and finally, we average all the student averages to get the course's overall score.
-                overallCoAttainment = studentOverallAttainments.length > 0 ? studentOverallAttainments.reduce((a,b) => a+b, 0) / studentOverallAttainments.length : 0;
+                
+                const totalAvg = studentOverallAttainments.reduce((sum, att) => sum + att, 0) / studentsInCourse.length;
+                overallCoAttainment = isNaN(totalAvg) ? 0 : totalAvg;
             }
 
-            // --- Calculation Part B: Average Linkage Level from this course to each PO ---
+            // --- Calculate Average Linkage to POs ---
             const averageLinkages: { [poId: string]: number } = {};
             programOutcomes.forEach(po => {
-                if (courseOutcomes.length === 0) { averageLinkages[po.id] = 0; return; }
+                if (courseOutcomes.length === 0) {
+                    averageLinkages[po.id] = 0;
+                    return;
+                }
 
                 let totalLinkageLevel = 0;
                 let linkedCoCount = 0;
 
                 courseOutcomes.forEach(co => {
-                    // Find the mapping strength (1, 2, or 3) from this CO to the current PO.
                     const mapping = data.coPoMapping.find(m => m.courseId === course.id && m.coId === co.id && m.poId === po.id);
                     const level = mapping?.level || 0;
+                    totalLinkageLevel += level;
                     if (level > 0) {
-                        totalLinkageLevel += level;
                         linkedCoCount++;
                     }
                 });
 
-                // The average is the total strength divided by the number of COs that actually map to the PO.
                 averageLinkages[po.id] = linkedCoCount > 0 ? totalLinkageLevel / linkedCoCount : 0;
             });
             
-            return { course, overallCoAttainment, averageLinkages };
+            return {
+                course,
+                overallCoAttainment,
+                averageLinkages
+            };
         });
 
-    }, [courses, programOutcomes, data, selectedBatch]);
+    }, [courses, programOutcomes, data]);
 
 
-    if (courses.length === 0) return null;
+    if (courses.length === 0) {
+        return null;
+    }
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -146,17 +121,14 @@ const CoursePoLinkageDashboard: React.FC<CoursePoLinkageDashboardProps> = ({ pro
                         </tr>
                     </thead>
                     <tbody>
-                        {/* We loop through our calculated data to build the table rows. */}
                         {courseLinkageData.map(({ course, overallCoAttainment, averageLinkages }) => (
                             <tr key={course.id} className="bg-white hover:bg-gray-50">
                                 <td className="border border-gray-300 p-2 font-semibold text-gray-700">{course.name} ({course.code})</td>
                                 <td className="border border-gray-300 p-2 text-center">
-                                    {/* The overall attainment score for the course. */}
                                     <span className={`font-bold px-2 py-1 rounded-md ${overallCoAttainment >= course.target ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                         {overallCoAttainment.toFixed(1)}%
                                     </span>
                                 </td>
-                                {/* The average linkage level from this course to each PO. */}
                                 {programOutcomes.map(po => (
                                     <td key={po.id} className="border border-gray-300 p-2 text-center text-gray-600">
                                         {averageLinkages[po.id].toFixed(2)}

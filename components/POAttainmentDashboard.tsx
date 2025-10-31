@@ -1,158 +1,30 @@
-/**
- * @file POAttainmentDashboard.tsx
- * @description
- * This is one of the most important and complex components in the application. It's the dashboard
- * on the `ProgramOutcomesList` page that calculates and displays the attainment levels for each
- * Program Outcome (PO).
- *
- * It consists of three main parts:
- * 1.  **Direct Attainment (Calculated)**: This is the most complex part. It calculates the PO
- *     attainment based on actual student performance in courses. It does this by:
- *     a. Calculating the attainment level for every single Course Outcome (CO) across all
- *        relevant courses in the selected program and batch.
- *     b. Using the CO-PO Mapping Matrix to calculate a weighted average, which becomes the
- *        "Direct Attainment" for each PO.
- * 2.  **Indirect Attainment (Manual Input)**: This provides a row of input fields where a user
- *     can manually enter attainment values, which are typically gathered from sources like
- *     surveys, employer feedback, etc.
- * 3.  **Overall Attainment (Calculated)**: This calculates the final PO attainment by combining
- *     the Direct and Indirect values using a weighted average, which the user can also adjust.
- */
-
 import React, { useMemo } from 'react';
-import { ProgramOutcome, Program } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
+import { ProgramOutcome } from '../types';
 
-// Defines the "shape" of the settings this dashboard manages (weights and indirect values).
 interface DashboardState {
     weights: { direct: number; indirect: number; };
     indirectAttainment: { [poId: string]: string; };
 }
-// Defines the "props" or properties this component accepts from its parent.
 interface POAttainmentDashboardProps {
   programOutcomes: ProgramOutcome[];
   draftState: DashboardState;
   onStateChange: (newState: DashboardState) => void;
-  selectedProgram: Program | null;
 }
 
-const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOutcomes, draftState, onStateChange, selectedProgram }) => {
-  // We get our app's data and the selected batch from the "magic backpack".
-  const { data, selectedBatch } = useAppContext();
+const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOutcomes, draftState, onStateChange }) => {
   const { weights, indirectAttainment } = draftState;
 
-  /**
-   * This is the heart of the direct attainment calculation, wrapped in `useMemo` for performance.
-   * It's a "smart calculator" that only re-runs this massive calculation when its dependencies change.
-   */
+  // Mock direct attainment values for demonstration
   const directAttainment = useMemo(() => {
-    if (!selectedProgram || !selectedBatch) return {};
-
-    const { courses, courseOutcomes, students, enrollments, assessments, marks, coPoMapping, batches, sections } = data;
-
-    // --- Step 1: Filter everything down to the selected program and batch. ---
-    const batch = batches.find(b => b.programId === selectedProgram.id && b.name === selectedBatch);
-    if (!batch) return {}; // Can't calculate without a valid batch.
-    const sectionIdsForBatch = new Set(sections.filter(s => s.batchId === batch.id).map(s => s.id));
-    const relevantCourses = courses.filter(c => c.programId === selectedProgram.id && (c.status === 'Active' || c.status === 'Completed'));
-    
-    // `coAttainmentLevelMap` will be our final result from the first major calculation phase.
-    // It will store the calculated attainment level (0-3) for every single CO.
-    const coAttainmentLevelMap = new Map<string, number>();
-
-    // --- Step 2: Loop through each course to calculate the attainment of its COs. ---
-    relevantCourses.forEach(course => {
-        const cosForCourse = courseOutcomes.filter(co => co.courseId === course.id);
-        
-        // Find all students who are enrolled in this course AND belong to the selected batch.
-        const studentsInCourseAndBatch = students.filter(s => 
-            s.status === 'Active' && s.sectionId && sectionIdsForBatch.has(s.sectionId) &&
-            enrollments.some(e => e.studentId === s.id && e.courseId === course.id)
-        );
-        const totalStudents = studentsInCourseAndBatch.length;
-        if (totalStudents === 0 || cosForCourse.length === 0) return; // Skip if no students or COs.
-
-        // --- Step 2a: Create fast lookup maps for this course's data. ---
-        const assessmentsForCourse = assessments.filter(a => enrollments.some(e => e.courseId === course.id && e.sectionId === a.sectionId));
-        
-        // Student marks map: Student ID -> Assessment ID -> Question Name -> Marks
-        const studentMarksMap = new Map<string, Map<string, Map<string, number>>>();
-        marks.forEach(mark => {
-            if (!studentMarksMap.has(mark.studentId)) studentMarksMap.set(mark.studentId, new Map());
-            const assessmentMap = studentMarksMap.get(mark.studentId)!;
-            assessmentMap.set(mark.assessmentId, new Map(mark.scores.map(s => [s.q, s.marks])));
-        });
-            
-        // CO questions map: CO ID -> [List of Questions]
-        const coQuestionMap = new Map<string, { q: string; maxMarks: number; assessmentId: string }[]>();
-        cosForCourse.forEach(co => coQuestionMap.set(co.id, []));
-        assessmentsForCourse.forEach(a => a.questions.forEach(q => q.coIds.forEach(coId => coQuestionMap.get(coId)?.push({ ...q, assessmentId: a.id }))));
-        
-        // --- Step 2b: For each CO in this course, calculate its attainment level. ---
-        cosForCourse.forEach(co => {
-            const questionsForCo = coQuestionMap.get(co.id) || [];
-            if (questionsForCo.length === 0) { coAttainmentLevelMap.set(co.id, 0); return; }
-            
-            let studentsMeetingTarget = 0;
-            // Loop through every student.
-            studentsInCourseAndBatch.forEach(student => {
-                const totalMaxCoMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
-                let totalObtainedCoMarks = 0;
-                
-                // Get the student's marks for all questions related to this CO.
-                const studentAllMarks = studentMarksMap.get(student.id);
-                if (studentAllMarks) {
-                    totalObtainedCoMarks = questionsForCo.reduce((sum, q) => sum + (studentAllMarks.get(q.assessmentId)?.get(q.q) || 0), 0);
-                }
-                
-                // If the student's percentage score for this CO meets the course target, count them.
-                if (totalMaxCoMarks > 0 && (totalObtainedCoMarks / totalMaxCoMarks) * 100 >= course.target) {
-                    studentsMeetingTarget++;
-                }
-            });
-
-            // Calculate the percentage of students who met the target.
-            const percentageMeetingTarget = totalStudents > 0 ? (studentsMeetingTarget / totalStudents) * 100 : 0;
-            
-            // Convert that percentage into a final attainment level (0-3) for this CO.
-            let attainmentLevel = 0;
-            if (percentageMeetingTarget >= course.attainmentLevels.level3) attainmentLevel = 3;
-            else if (percentageMeetingTarget >= course.attainmentLevels.level2) attainmentLevel = 2;
-            else if (percentageMeetingTarget >= course.attainmentLevels.level1) attainmentLevel = 1;
-            
-            // Store the result in our map.
-            coAttainmentLevelMap.set(co.id, attainmentLevel);
-        });
-    });
-
-    // --- Step 3: Loop through each PO and calculate its final Direct Attainment. ---
-    const poAttainments: { [poId: string]: number } = {};
+    const attainment: { [poId: string]: number } = {};
     programOutcomes.forEach(po => {
-        // Find all the COs that are mapped to this PO.
-        const relevantMappings = coPoMapping.filter(m => m.poId === po.id && coAttainmentLevelMap.has(m.coId));
-        
-        let weightedSum = 0; // Sum of (CO Attainment Level * Mapping Strength)
-        let totalWeight = 0; // Sum of (Mapping Strength)
-
-        relevantMappings.forEach(mapping => {
-            const coLevel = coAttainmentLevelMap.get(mapping.coId);
-            if (coLevel !== undefined) {
-                weightedSum += coLevel * mapping.level;
-                totalWeight += mapping.level;
-            }
-        });
-
-        // The direct attainment is the weighted average.
-        poAttainments[po.id] = totalWeight > 0 ? parseFloat((weightedSum / totalWeight).toFixed(2)) : 0;
+      attainment[po.id] = parseFloat((Math.random() * (2.8 - 1.5) + 1.5).toFixed(2));
     });
-
-    return poAttainments;
-  }, [selectedProgram, selectedBatch, data, programOutcomes]);
+    return attainment;
+  }, [programOutcomes]);
   
 
-  // This runs when a user types in an "Indirect" attainment input field.
   const handleIndirectChange = (poId: string, value: string) => {
-    // It updates the `draftState` in the parent component.
     onStateChange({
         ...draftState,
         indirectAttainment: {
@@ -162,7 +34,6 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
     });
   };
   
-  // This runs when a user changes the "Weightage" inputs.
   const handleWeightChange = (type: 'direct' | 'indirect', value: string) => {
     const numValue = parseInt(value, 10);
     if (isNaN(numValue) || numValue < 0 || numValue > 100) {
@@ -170,17 +41,21 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
     }
 
     if (type === 'direct') {
-        onStateChange({ ...draftState, weights: { direct: numValue, indirect: 100 - numValue } });
+        onStateChange({
+            ...draftState,
+            weights: { direct: numValue, indirect: 100 - numValue }
+        });
     } else { // type === 'indirect'
-         onStateChange({ ...draftState, weights: { direct: 100 - numValue, indirect: numValue } });
+         onStateChange({
+            ...draftState,
+            weights: { direct: 100 - numValue, indirect: numValue }
+        });
     }
   };
 
-  // This calculates the final "Overall Attainment" value for a single PO.
   const calculateOverall = (poId: string) => {
     const direct = directAttainment[poId] || 0;
     
-    // If the user hasn't entered an indirect value, we default to 3.
     const indirectValue = indirectAttainment[poId];
     const indirect = (indirectValue === undefined || indirectValue.trim() === '') 
       ? 3 
@@ -190,7 +65,6 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
         return 'Invalid';
     }
 
-    // Apply the weights to get the final score.
     const directWeight = weights.direct / 100;
     const indirectWeight = weights.indirect / 100;
     
@@ -221,7 +95,7 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
                 </div>
               </td>
               {programOutcomes.map(po => (
-                <td key={po.id} className="border border-gray-300 p-2 text-center font-semibold text-green-600">{directAttainment[po.id] ?? 'N/A'}</td>
+                <td key={po.id} className="border border-gray-300 p-2 text-center font-semibold text-green-600">{directAttainment[po.id]}</td>
               ))}
             </tr>
             <tr className="bg-white">
