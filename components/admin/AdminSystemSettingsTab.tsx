@@ -1,34 +1,56 @@
+/**
+ * @file AdminSystemSettingsTab.tsx
+ * @description
+ * This component is the "System Settings" tab within the `AdminPanel`. It allows an
+ * Administrator to configure system-wide default values that affect various calculations
+ * and new items created throughout the application.
+ *
+ * For example, when a new course is created, it will use the default values set here
+ * for its attainment targets and thresholds.
+ *
+ * What it does:
+ * 1.  **Displays Default Settings**: It shows forms for settings like:
+ *     - Default CO Attainment Target.
+ *     - Default Attainment Level Thresholds.
+ *     - Default weights for Direct vs. Indirect PO attainment.
+ * 2.  **Uses a "Draft State"**: Like other management screens, it uses a "draft state".
+ *     When the Admin changes a value, it's not saved immediately. The `SaveBar` appears,
+ *     allowing the Admin to save all changes at once or cancel them.
+ */
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { SystemSettings } from '../../types';
 import SaveBar from '../SaveBar';
 
 const AdminSystemSettingsTab: React.FC = () => {
+    // Get the main app data and tools from the "magic backpack".
     const { data, setData } = useAppContext();
     
+    // --- Draft State Management ---
+    // `draftSettings` is the temporary copy of the settings we make changes to.
     const [draftSettings, setDraftSettings] = useState<SystemSettings>(data.settings);
+    // `initialSettings` is the saved version, used for comparison.
     const [initialSettings, setInitialSettings] = useState<SystemSettings>(data.settings);
 
+    // This `useEffect` hook ensures our component's state is up-to-date if the global data ever changes.
     useEffect(() => {
         setDraftSettings(data.settings);
         setInitialSettings(data.settings);
     }, [data.settings]);
 
+    // `isDirty` checks if there are any unsaved changes.
     const isDirty = useMemo(() => JSON.stringify(draftSettings) !== JSON.stringify(initialSettings), [draftSettings, initialSettings]);
 
-<<<<<<< HEAD
     // --- Handlers for Form Inputs ---
     // A generic handler for simple input fields.
     const handleInputChange = (field: 'defaultCoTarget', value: number) => {
         if (value >= 0 && value <= 100) {
             setDraftSettings(prev => ({ ...prev, [field]: value }));
         }
-=======
-    const handleInputChange = (field: keyof SystemSettings, value: number) => {
-        setDraftSettings(prev => ({ ...prev, [field]: value }));
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
     };
 
+    // A specific handler for the nested "Attainment Levels" object.
     const handleLevelChange = (level: keyof SystemSettings['defaultAttainmentLevels'], value: number) => {
         if (value >= 0 && value <= 100) {
             setDraftSettings(prev => ({
@@ -38,8 +60,9 @@ const AdminSystemSettingsTab: React.FC = () => {
         }
     };
 
+    // A handler for the "Weights" inputs, which ensures they always add up to 100.
     const handleWeightChange = (type: 'direct' | 'indirect', value: number) => {
-        if (value < 0 || value > 100) return;
+        if (value < 0 || value > 100) return; // Basic validation.
         setDraftSettings(prev => ({
             ...prev,
             defaultWeights: {
@@ -49,21 +72,25 @@ const AdminSystemSettingsTab: React.FC = () => {
         }));
     };
 
+    // --- Handlers for the SaveBar ---
     const handleSave = () => {
+        // Update the main application data in the "magic backpack".
         setData(prev => ({ ...prev, settings: draftSettings }));
+        // The draft is now the new "saved" state.
         setInitialSettings(draftSettings);
         alert('System settings saved successfully!');
     };
 
     const handleCancel = () => {
+        // Discard all changes by resetting the draft to the initial state.
         setDraftSettings(initialSettings);
     };
 
     return (
+        // `pb-20` adds padding at the bottom so the SaveBar doesn't cover content.
         <div className="space-y-8 pb-20">
             <h2 className="text-xl font-semibold text-gray-700">Default System Settings</h2>
             
-<<<<<<< HEAD
             {/* Form section for Default CO Attainment Target */}
             <div className="space-y-4 max-w-lg p-4 border rounded-lg bg-gray-50">
                 <h3 className="font-semibold text-gray-800">Default CO Attainment Target</h3>
@@ -113,54 +140,11 @@ const AdminSystemSettingsTab: React.FC = () => {
                             value={draftSettings.defaultAttainmentLevels.level1}
                             onChange={e => handleLevelChange('level1', Number(e.target.value))}
                             className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-=======
-            <div className="space-y-4 max-w-lg">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Default CO Attainment Target (%)</label>
-                    <input
-                        type="number"
-                        value={draftSettings.defaultCoTarget}
-                        onChange={e => handleInputChange('defaultCoTarget', parseInt(e.target.value))}
-                        className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                 <h3 className="text-lg font-semibold text-gray-700">Default Attainment Level Thresholds</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Level 3 (&ge; X % of students)</label>
-                        <input
-                            type="number"
-                            value={draftSettings.defaultAttainmentLevels.level3}
-                            onChange={e => handleLevelChange('level3', parseInt(e.target.value))}
-                            className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Level 2 (&ge; Y % of students)</label>
-                        <input
-                            type="number"
-                            value={draftSettings.defaultAttainmentLevels.level2}
-                            onChange={e => handleLevelChange('level2', parseInt(e.target.value))}
-                            className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Level 1 (&ge; Z % of students)</label>
-                        <input
-                            type="number"
-                            value={draftSettings.defaultAttainmentLevels.level1}
-                            onChange={e => handleLevelChange('level1', parseInt(e.target.value))}
-                            className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
                         />
                     </div>
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* Form section for Default Direct/Indirect Weights */}
             <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
                 <h3 className="font-semibold text-gray-800">Default PO Attainment Weights</h3>
@@ -184,37 +168,12 @@ const AdminSystemSettingsTab: React.FC = () => {
                             value={draftSettings.defaultWeights.indirect}
                             onChange={e => handleWeightChange('indirect', Number(e.target.value))}
                             className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-=======
-            <div className="space-y-4">
-                 <h3 className="text-lg font-semibold text-gray-700">Default Direct/Indirect Attainment Weights</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Direct Weight (%)</label>
-                        <input
-                            type="number"
-                            value={draftSettings.defaultWeights.direct}
-                            onChange={e => handleWeightChange('direct', parseInt(e.target.value))}
-                            className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Indirect Weight (%)</label>
-                        <input
-                            type="number"
-                            value={draftSettings.defaultWeights.indirect}
-                            onChange={e => handleWeightChange('indirect', parseInt(e.target.value))}
-                            className="mt-1 w-full p-2 border bg-white text-gray-900 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
                         />
                     </div>
                 </div>
             </div>
-<<<<<<< HEAD
             
             {/* The SaveBar only appears if `isDirty` is true. */}
-=======
-
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
             <SaveBar isDirty={isDirty} onSave={handleSave} onCancel={handleCancel} />
         </div>
     );

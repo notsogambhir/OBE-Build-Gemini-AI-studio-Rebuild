@@ -2,6 +2,18 @@
 
 This document tracks all significant changes made to the NBA Outcome Based Education Portal application.
 
+## [Unreleased] - 2024-07-30
+
+### Feature: Comprehensive Documentation & Backend Asset Finalization
+- **Docs**: Completed a full pass to add extensive, beginner-friendly comments to every single file (`.ts`, `.tsx`) in the codebase, explaining the purpose of each component, function, and complex logic.
+- **Docs**: Created and finalized a `fileguide.md` to provide a high-level overview of every file's role in the application.
+- **Docs**: Created and finalized a `flowchart.md` with a Mermaid diagram to visually represent the entire application architecture, data flow, and user navigation paths.
+- **Docs**: Reviewed and polished the `backend_guide.md` to ensure it is a complete and accurate blueprint for backend development, including a detailed API endpoint cheatsheet.
+- **New**: Created `schema.sql.txt`, a file containing the complete `CREATE TABLE` statements for a PostgreSQL database, providing a ready-to-use database schema.
+- **New**: Created `data_insertion.sql.txt`, a file containing all the `INSERT INTO` statements required to populate the database with the exact data from `mockData.json`, enabling rapid backend setup.
+- **Refactor**: Unified the main `Dashboard.tsx` to act as a "smart router", displaying a dedicated `TeacherDashboard` for teachers and the statistical view for all other roles.
+- **Feature**: Implemented a full-featured, interactive "Attainment Reports" page with a tile-based dashboard, contextual controls, and PDF download functionality for multiple report types.
+
 ## [Unreleased] - 2024-07-28
 
 ### Feature: Centralized Batch Management & Program Durations

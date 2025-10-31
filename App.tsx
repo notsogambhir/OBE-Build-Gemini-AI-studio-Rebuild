@@ -1,16 +1,30 @@
+/**
+ * @file App.tsx
+ * @description
+ * This is the main "brain" or "traffic controller" of the entire application.
+ * It's the highest-level component that decides which page or layout to show the user.
+ * 
+ * It uses a tool called React Router (`HashRouter`) to act like a GPS for the app.
+ * Based on the URL in the browser's address bar and whether the user is logged in,
+ * it directs the user to the correct screen.
+ * 
+ * Main responsibilities:
+ * 1.  Manages the primary routing logic (e.g., `/login`, `/dashboard`).
+ * 2.  Acts as a gatekeeper: It shows the `LoginScreen` if the user is not logged in.
+ * 3.  If the user is logged in, it passes control to the `ProtectedRoutes` component,
+ *     which handles all the screens for authenticated users.
+ */
+
 import React from 'react';
-<<<<<<< HEAD
 // FIX: Changed react-router-dom import to namespace import to fix module resolution issues.
 import * as ReactRouterDOM from 'react-router-dom';
 import { useAppContext } from './hooks/useAppContext'; // Helper to get shared data like the current user.
-=======
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAppContext } from './hooks/useAppContext';
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
 
+// Importing all the different "pages" or "screens" of the application.
+// Think of these as the different destinations our app's GPS can navigate to.
 import LoginScreen from './pages/LoginScreen';
 import ProgramSelectionScreen from './pages/ProgramSelectionScreen';
-import MainLayout from './components/MainLayout';
+import MainLayout from './components/MainLayout'; // The main visual structure (Sidebar + Header).
 import Dashboard from './pages/Dashboard';
 import CoursesList from './pages/CoursesList';
 import CourseDetail from './pages/CourseDetail';
@@ -24,67 +38,36 @@ import DepartmentStudentManagement from './pages/DepartmentStudentManagement';
 import DepartmentFacultyManagement from './pages/DepartmentFacultyManagement';
 import AdminPanel from './pages/AdminPanel';
 
+/**
+ * A special component that handles all the routing for a user who is already logged in.
+ * It acts as a security guard and a smart navigator inside the main app.
+ */
 const ProtectedRoutes: React.FC = () => {
+    // We ask our "magic backpack" (AppContext) for the current user and their selections.
     const { currentUser, selectedProgram, selectedBatch } = useAppContext();
-<<<<<<< HEAD
     const location = ReactRouterDOM.useLocation(); // This tells us the user's current URL.
-=======
-    const location = useLocation();
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
 
+    // If for some reason there's no user, send them back to the login page immediately.
     if (!currentUser) {
         return <ReactRouterDOM.Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // Department user workflow
-    if (currentUser.role === 'Department') {
-        return (
-            <MainLayout>
-                <Routes>
-                    <Route path="/department/students" element={<DepartmentStudentManagement />} />
-                    <Route path="/department/faculty" element={<DepartmentFacultyManagement />} />
-                    <Route path="*" element={<Navigate to="/department/students" replace />} />
-                </Routes>
-            </MainLayout>
-        );
-    }
-
-    // Admin user workflow
-    if (currentUser.role === 'Admin') {
-        return (
-             <MainLayout>
-                <Routes>
-                    {/* Admin-specific routes */}
-                    <Route path="/admin/academic-structure" element={<AdminPanel view="Academic Structure" />} />
-                    <Route path="/admin/user-management" element={<AdminPanel view="User Management" />} />
-                    <Route path="/admin/system-settings" element={<AdminPanel view="System Settings" />} />
-
-                    {/* Standard routes also accessible by Admin */}
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/courses" element={<CoursesList />} />
-                    <Route path="/courses/:courseId" element={<CourseDetail />} />
-                    <Route path="/courses/:courseId/report" element={<StudentCOAttainmentReport />} />
-                    <Route path="/program-outcomes" element={<ProgramOutcomesList />} />
-                    <Route path="/students" element={<StudentsList />} />
-                    <Route path="/reports" element={<AttainmentReports />} />
-                    
-                    {/* Default admin route */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-            </MainLayout>
-        );
-    }
-    
-    // Program selection gate for other roles
+    // These users have dropdowns in their sidebar to choose programs, so they don't need the full-page selection screen.
+    const rolesWithSidebarSelectors = ['Admin', 'University', 'Department'];
+    // Check if the user needs to pick a program and batch to continue.
     const needsProgramSelection = !selectedProgram || !selectedBatch;
-    if (needsProgramSelection && currentUser.role !== 'University') {
+
+    // If a user (like a Teacher or PC) needs to select a program but hasn't yet,
+    // we stop them and show them the ProgramSelectionScreen.
+    if (needsProgramSelection && !rolesWithSidebarSelectors.includes(currentUser.role)) {
         return <ProgramSelectionScreen />;
     }
     
-    // Default workflow for authenticated users with a selected program
+    // If the user is logged in and has made their selections (or doesn't need to),
+    // we show them the main application layout with all the possible pages inside.
     return (
+        // `MainLayout` provides the consistent Sidebar and Header for all pages.
         <MainLayout>
-<<<<<<< HEAD
             {/* The `Routes` component looks at the URL and decides which page `element` to show. */}
             <ReactRouterDOM.Routes>
                 {/* Admin-specific pages */}
@@ -116,31 +99,19 @@ const ProtectedRoutes: React.FC = () => {
                     currentUser.role === 'Department' ? "/department/faculty" : "/dashboard"
                 } replace />} />
             </ReactRouterDOM.Routes>
-=======
-            <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/courses" element={<CoursesList />} />
-                <Route path="/courses/:courseId" element={<CourseDetail />} />
-                <Route path="/courses/:courseId/report" element={<StudentCOAttainmentReport />} />
-                <Route path="/program-outcomes" element={<ProgramOutcomesList />} />
-                <Route path="/students" element={<StudentsList />} />
-                <Route path="/teachers" element={<TeacherManagement />} />
-                <Route path="/teachers/:teacherId" element={<TeacherDetails />} />
-                <Route path="/reports" element={<AttainmentReports />} />
-                <Route path="/program-selection" element={<ProgramSelectionScreen />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
         </MainLayout>
     );
 };
 
 
+/**
+ * The main App component. This is the root of our entire application's UI.
+ */
 const App: React.FC = () => {
+  // Get the current user from our shared data "backpack".
   const { currentUser } = useAppContext();
 
   return (
-<<<<<<< HEAD
     // `HashRouter` is the component that enables all the routing functionality (the app's GPS).
     <ReactRouterDOM.HashRouter>
         {/* `Routes` decides which of the top-level routes to render. */}
@@ -153,14 +124,6 @@ const App: React.FC = () => {
             <ReactRouterDOM.Route path="/*" element={currentUser ? <ProtectedRoutes /> : <ReactRouterDOM.Navigate to="/login" />} />
         </ReactRouterDOM.Routes>
     </ReactRouterDOM.HashRouter>
-=======
-    <HashRouter>
-        <Routes>
-            <Route path="/login" element={<LoginScreen />} />
-            <Route path="/*" element={currentUser ? <ProtectedRoutes /> : <Navigate to="/login" />} />
-        </Routes>
-    </HashRouter>
->>>>>>> parent of ca350be (feat: Initialize app entry points and types)
   );
 };
 

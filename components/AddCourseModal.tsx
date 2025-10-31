@@ -1,20 +1,48 @@
+/**
+ * @file AddCourseModal.tsx
+ * @description
+ * This file defines the `AddCourseModal` component.
+ *
+ * **NOTE: This is an older, deprecated component and is no longer actively used in the application.**
+ *
+ * What was its purpose?
+ * Imagine our app is a big library. This component was like a small pop-up window that would appear
+ * whenever you wanted to add one new book (a "Course") to the library. You would fill out the
+ * book's details in the pop-up and click "Add".
+ *
+ * Why is it no longer used?
+ * We found that having to open a pop-up every time was a bit slow. Instead, we built a special
+ * "intake desk" (an inline form) right at the top of the main library room (`pages/CoursesList.tsx`).
+ * Now, you can add a new book right from the main page without any pop-ups. It's much faster and
+ * more convenient.
+ *
+ * Because we have this new, better system, this old pop-up window is no longer needed. It's kept
+ * here for historical reasons but can be safely removed in a future cleanup.
+ */
+
 import React, { useState } from 'react';
 import { Course } from '../types';
-import Modal from './Modal';
+import Modal from './Modal'; // It used the generic Modal component as a base.
 
+// This defines the "props" or properties the component was designed to accept.
 interface AddCourseModalProps {
-  onClose: () => void;
-  onAdd: (course: Course) => void;
-  programId: string;
+  onClose: () => void; // A function to close the modal.
+  onAdd: (course: Course) => void; // A function to pass the newly created course back to the parent.
+  programId: string; // The ID of the program the new course would belong to.
 }
 
+// This is the main (and now deprecated) component function.
 const AddCourseModal: React.FC<AddCourseModalProps> = ({ onClose, onAdd, programId }) => {
+    // It used its own internal memory (`useState`) for the form fields.
     const [code, setCode] = useState('');
     const [name, setName] = useState('');
     const [target, setTarget] = useState(50);
 
+    // This function ran when the form was submitted.
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault(); // Stop the page from reloading.
+        
+        // It would create a new `Course` object with some default values.
         const newCourse: Course = {
             id: `c_manual_${Date.now()}`,
             programId,
@@ -24,12 +52,14 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ onClose, onAdd, program
             internalWeightage: 25,
             externalWeightage: 75,
             attainmentLevels: { level3: 80, level2: 70, level1: 50 },
-            status: 'Future', // Default status for new courses
+            status: 'Future', // New courses always started as 'Future'.
         };
+        // It would then call the `onAdd` function passed from its parent to add the course.
         onAdd(newCourse);
     }
 
     return (
+        // The component rendered a form inside the generic `Modal` wrapper.
         <Modal title="Add New Course" onClose={onClose}>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                  <div>
