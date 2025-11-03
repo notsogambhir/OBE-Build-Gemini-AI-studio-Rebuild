@@ -41,8 +41,8 @@ const Dashboard: React.FC = () => {
     // when the underlying data or selected program changes.
     const programCourses = useMemo(() => {
         // First, get all courses that belong to the currently selected program.
-        // FIX: The check for 'Teacher' role is redundant here because the TeacherDashboard is
-        // rendered for teachers before this code is reached, causing a type error.
+        // The check for 'Teacher' role is redundant here because the TeacherDashboard is
+        // rendered for teachers before this code is reached.
         const courses = data.courses.filter(c => c.programId === selectedProgram?.id);
         return courses;
     }, [data.courses, selectedProgram]);
