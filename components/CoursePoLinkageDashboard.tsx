@@ -80,16 +80,17 @@ const CoursePoLinkageDashboard: React.FC<CoursePoLinkageDashboardProps> = ({ pro
                         const questionsForCo = coQuestionMap.get(co.id) || [];
                         if (questionsForCo.length === 0) return 0;
                         
-                        const totalMaxMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
+                        let totalMaxMarks = 0;
                         let totalObtainedMarks = 0;
-
                         const studentAllMarks = studentMarksMap.get(student.id);
-                        if (studentAllMarks) {
-                            totalObtainedMarks = questionsForCo.reduce((sum, q) => {
-                                const marks = studentAllMarks.get(q.assessmentId)?.get(q.q);
-                                return sum + (marks || 0);
-                            }, 0);
-                        }
+
+                        questionsForCo.forEach(q => {
+                            const mark = studentAllMarks?.get(q.assessmentId)?.get(q.q);
+                            if (mark !== undefined && mark !== null) {
+                                totalObtainedMarks += mark;
+                                totalMaxMarks += q.maxMarks;
+                            }
+                        });
 
                         return totalMaxMarks > 0 ? (totalObtainedMarks / totalMaxMarks) * 100 : 0;
                     });
@@ -163,7 +164,7 @@ const CoursePoLinkageDashboard: React.FC<CoursePoLinkageDashboardProps> = ({ pro
                                     </td>
                                 ))}
                             </tr>
-                        ))}
+                        ))}\
                     </tbody>
                 </table>
             </div>

@@ -68,7 +68,8 @@ const CourseCoAttainment: React.FC<CourseCoAttainmentProps> = ({ course }) => {
 
         const allCourseSectionIds = new Set(courseSections.map(s => s.id));
         
-        allCourseSectionIds.forEach(sectionId => {
+        // FIX: Explicitly type `sectionId` as string to resolve TS inference issue.
+        allCourseSectionIds.forEach((sectionId: string) => {
             const sectionTeacher = course.sectionTeacherIds?.[sectionId];
             if (sectionTeacher && sectionTeacher === teacherId) {
                 // If the teacher is explicitly assigned to this section, add it.
@@ -126,14 +127,18 @@ const CourseCoAttainment: React.FC<CourseCoAttainmentProps> = ({ course }) => {
         let studentsMeetingTarget = 0;
         // Loop through every student in our scope.
         studentsInScope.forEach(student => {
-            const totalMaxCoMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
-            const studentAssessmentMarks = studentMarksMap.get(student.id);
+            let totalMaxCoMarks = 0;
             let totalObtainedCoMarks = 0;
+            const studentAssessmentMarks = studentMarksMap.get(student.id);
 
-            if (studentAssessmentMarks) {
-                // For this student, add up their marks for all questions linked to this CO.
-                totalObtainedCoMarks = questionsForCo.reduce((sum, q) => sum + (studentAssessmentMarks.get(q.assessmentId)?.get(q.q) || 0), 0);
-            }
+            questionsForCo.forEach(q => {
+                const mark = studentAssessmentMarks?.get(q.assessmentId)?.get(q.q);
+                // A question is considered attempted if the mark is not undefined or null.
+                if (mark !== undefined && mark !== null) { 
+                    totalObtainedCoMarks += mark;
+                    totalMaxCoMarks += q.maxMarks;
+                }
+            });
             
             // Calculate the student's percentage score for this specific CO.
             const studentCoPercentage = totalMaxCoMarks > 0 ? (totalObtainedCoMarks / totalMaxCoMarks) * 100 : 0;

@@ -96,14 +96,20 @@ const POAttainmentDashboard: React.FC<POAttainmentDashboardProps> = ({ programOu
             let studentsMeetingTarget = 0;
             // Loop through every student.
             studentsInCourseAndBatch.forEach(student => {
-                const totalMaxCoMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
+                let totalMaxCoMarks = 0;
                 let totalObtainedCoMarks = 0;
-                
-                // Get the student's marks for all questions related to this CO.
                 const studentAllMarks = studentMarksMap.get(student.id);
-                if (studentAllMarks) {
-                    totalObtainedCoMarks = questionsForCo.reduce((sum, q) => sum + (studentAllMarks.get(q.assessmentId)?.get(q.q) || 0), 0);
-                }
+
+                questionsForCo.forEach(q => {
+                    const studentMark = studentAllMarks?.get(q.assessmentId)?.get(q.q);
+                    
+                    // A question is considered attempted if the mark is not undefined or null.
+                    // A score of 0 is an attempt.
+                    if (studentMark !== undefined && studentMark !== null) {
+                        totalObtainedCoMarks += studentMark;
+                        totalMaxCoMarks += q.maxMarks;
+                    }
+                });
                 
                 // If the student's percentage score for this CO meets the course target, count them.
                 if (totalMaxCoMarks > 0 && (totalObtainedCoMarks / totalMaxCoMarks) * 100 >= course.target) {

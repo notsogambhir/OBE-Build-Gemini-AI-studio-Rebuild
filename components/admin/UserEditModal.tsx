@@ -26,7 +26,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { User, Role, College } from '../../types';
 import Modal from '../Modal';
 
-// This defines the "props" or properties this component accepts.
+// This defines the "props" or properties that this component accepts.
 interface UserEditModalProps {
   userToEdit: User | null; // The user to edit, or null if creating a new one.
   onClose: () => void; // A function to close the modal.
@@ -152,7 +152,8 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ userToEdit, onClose }) =>
                         <select
                             multiple
                             value={user.programCoordinatorIds || []}
-                            onChange={(e) => handleMultiSelectChange('programCoordinatorIds', Array.from(e.target.selectedOptions, option => option.value))}
+                            // FIX: Explicitly type the 'option' parameter as HTMLOptionElement.
+                            onChange={(e) => handleMultiSelectChange('programCoordinatorIds', Array.from(e.target.selectedOptions, (option: HTMLOptionElement) => option.value))}
                             className="mt-1 block w-full h-24 bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         >
                            {programCoordinators.map(pc => <option key={pc.id} value={pc.id}>{pc.name}</option>)}

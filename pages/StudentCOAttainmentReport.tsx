@@ -91,16 +91,22 @@ const StudentCOAttainmentReport: React.FC<StudentCOAttainmentReportProps> = ({ c
         const reportData = new Map<string, { [coId: string]: number }>();
         activeStudents.forEach(student => {
             const studentAttainment: { [coId: string]: number } = {};
+            const studentMarks = data.marks.filter(m => m.studentId === student.id);
             courseOutcomes.forEach(co => {
                 const questionsForCo = coQuestionMap.get(co.id) || [];
-                const totalMaxCoMarks = questionsForCo.reduce((sum, q) => sum + q.maxMarks, 0);
                 let totalObtainedCoMarks = 0;
-                const studentMarks = data.marks.filter(m => m.studentId === student.id);
+                let totalMaxCoMarks = 0;
+                
                 questionsForCo.forEach(q => {
                     const mark = studentMarks.find(m => m.assessmentId === q.assessmentId);
                     const score = mark?.scores.find(s => s.q === q.q);
-                    if (score) { totalObtainedCoMarks += score.marks; }
+                    // A question is considered attempted if a score object exists for it.
+                    if (score !== undefined) { 
+                        totalObtainedCoMarks += score.marks;
+                        totalMaxCoMarks += q.maxMarks;
+                    }
                 });
+
                 studentAttainment[co.id] = totalMaxCoMarks > 0 ? (totalObtainedCoMarks / totalMaxCoMarks) * 100 : 0;
             });
             reportData.set(student.id, studentAttainment);
